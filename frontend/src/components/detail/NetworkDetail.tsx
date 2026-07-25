@@ -1,31 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import NetworkHistoryChart from "./NetworkHistoryChart.tsx";
 import CopyButton from "../CopyButton.tsx";
 import ShareButton from "../ShareButton.tsx";
 import { NetworkDetails } from "../../../../common/models/serverData.ts";
+import { useNetworkDetail } from "../../hooks/useNetworkDetail.ts";
 
 const NetworkDetail: React.FC<{ network: NetworkDetails }> = ({ network }) => {
-  const [details, setDetails] = useState<NetworkDetails | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { details, loading, error } = useNetworkDetail(network.id);
   const [showIp, setShowIp] = useState(true);
-
-  // Fetch additional network details (player peaks, top server, etc.)
-  useEffect(() => {
-    const fetchDetails = async () => {
-      try {
-        const response = await fetch(`/api/networks/${network.id}/details`);
-        if (!response.ok) throw new Error("Failed to fetch network details");
-        const data: NetworkDetails = await response.json();
-        setDetails(data);
-      } catch (error) {
-        console.error("Error fetching network details:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDetails();
-  }, [network]);
 
   if (loading) {
     return (
@@ -35,10 +17,11 @@ const NetworkDetail: React.FC<{ network: NetworkDetails }> = ({ network }) => {
     );
   }
 
-  if (!details) {
+  if (error || !details) {
     return (
       <div className="h-full flex items-center justify-center">
         <p className="text-red-400">Failed to load network details.</p>
+        {error && <p className="text-red-300">{error.message}</p>}
       </div>
     );
   }
@@ -50,10 +33,10 @@ const NetworkDetail: React.FC<{ network: NetworkDetails }> = ({ network }) => {
         <div className="bg-neutral-800/30 backdrop-blur-md border border-neutral-700/50 rounded-xl p-4 sm:p-6 mb-4 sm:mb-6">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 gap-4">
             <div className="flex-1 min-w-0">
-              <h1 className="text-xl sm:text-2xl font-bold text-white mb-2 break-words">
+              <h1 className="text-xl sm:text-2xl font-bold text-white mb-2 wrap-break-word">
                 {String(details.name)}
               </h1>
-              <p className="text-gray-300 mb-4 text-sm sm:text-base break-words">
+              <p className="text-gray-300 mb-4 text-sm sm:text-base wrap-break-word">
                 Network
               </p>
               <div className="flex flex-wrap items-center gap-2 sm:gap-4">
@@ -74,7 +57,7 @@ const NetworkDetail: React.FC<{ network: NetworkDetails }> = ({ network }) => {
               </div>
             </div>
 
-            <div className="text-left sm:text-right flex-shrink-0">
+            <div className="text-left sm:text-right shrink-0">
               <div className="text-3xl sm:text-4xl font-bold text-orange-400 drop-shadow-[0_0_10px_rgba(249,115,22,0.3)]">
                 {details.topServer ? String(details.topServer.players) : "0"}
               </div>
@@ -88,13 +71,13 @@ const NetworkDetail: React.FC<{ network: NetworkDetails }> = ({ network }) => {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 text-xs sm:text-sm">
               <div className="bg-neutral-700/30 backdrop-blur-sm border border-neutral-600/30 p-2 sm:p-3 rounded-lg">
                 <span className="text-gray-400">Top Server: </span>
-                <span className="font-medium text-white break-words">
+                <span className="font-medium text-white wrap-break-word">
                   {String(details.topServer.name)}
                 </span>
               </div>
               <div className="bg-neutral-700/30 backdrop-blur-sm border border-neutral-600/30 p-2 sm:p-3 rounded-lg">
                 <span className="text-gray-400">Host: </span>
-                <span className="font-medium text-white break-words">
+                <span className="font-medium text-white wrap-break-word">
                   {showIp
                     ? `${details.topServer.host}:${details.topServer.port}`
                     : "Hidden"}
