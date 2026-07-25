@@ -2,8 +2,23 @@ import { useState, useEffect } from "react";
 import { ApiPacker } from "../../../common/Packer";
 import { DateRangeOption } from "../util/dateRangeConsts";
 
+export enum HistoryType {
+  Network = "network",
+  Server = "server"
+}
 
-export function useNetworkHistory<T>(endpointBaseUrl: string) {
+function getEndpointBaseUrl(id: number | string, type: HistoryType): string {
+  switch (type) {
+    case HistoryType.Network:
+      return `/api/networks/${id}/history`;
+    case HistoryType.Server:
+      return `/api/servers/${id}/history`;
+    default:
+      throw new Error(`Unknown history type: ${type}`);
+  }
+}
+
+export function useHistory<T>(id: number | string, type: HistoryType) {
   const [selectedRange, setSelectedRange] = useState<DateRangeOption>("1d");
   const [customStartDate, setCustomStartDate] = useState<string>("");
   const [customEndDate, setCustomEndDate] = useState<string>("");
@@ -12,6 +27,8 @@ export function useNetworkHistory<T>(endpointBaseUrl: string) {
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [dateError, setDateError] = useState<string | null>(null);
+
+  const endpointBaseUrl = getEndpointBaseUrl(id, type);
 
   useEffect(() => {
     // 1. Date range validation

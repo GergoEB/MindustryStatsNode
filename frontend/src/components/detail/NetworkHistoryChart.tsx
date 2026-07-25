@@ -11,8 +11,8 @@ import {
     Tooltip
 } from 'chart.js';
 import {NetworkDetails, ServerHistory} from "../../../../common/models/serverData.ts";
-import { useNetworkHistory } from '../../hooks/useNetworkHistory.ts';
 import { DATE_RANGE_OPTIONS, DateRangeOption } from '../../util/dateRangeConsts.ts';
+import { HistoryType, useHistory } from '../../hooks/useHistory.ts';
 
 // Register Chart.js components
 Chart.register(LineElement, PointElement, LineController, CategoryScale, LinearScale, Tooltip, Legend, Filler);
@@ -32,7 +32,7 @@ const NetworkHistoryChart = ({network}: { network: NetworkDetails }) => {
         setCustomStartDate,
         customEndDate,
         setCustomEndDate,
-      } = useNetworkHistory<ServerHistory>(`/api/networks/${network.id}/history`);
+      } = useHistory<ServerHistory>(network.id, HistoryType.Network);
 
     // Get today's date for max attribute on date inputs
     const today = new Date().toISOString().split('T')[0];

@@ -10,11 +10,9 @@ import {
   PointElement,
   Tooltip,
 } from "chart.js";
-import { ServerElement } from "../../../../common/models/serverData.ts";
-import {
-  useServerHistory,
-} from "../../hooks/useServerHistory.ts";
+import { ServerElement, ServerHistory } from "../../../../common/models/serverData.ts";
 import { DATE_RANGE_OPTIONS, DateRangeOption } from "../../util/dateRangeConsts.ts";
+import { HistoryType, useHistory } from "../../hooks/useHistory.ts";
 
 // Register Chart.js components
 Chart.register(
@@ -43,7 +41,7 @@ const ServerHistoryChart = ({ id }: ServerElement) => {
     setCustomStartDate,
     customEndDate,
     setCustomEndDate,
-  } = useServerHistory(id);
+  } = useHistory<ServerHistory>(id, HistoryType.Server);
 
   // Helper for date pickers
   const today = new Date().toISOString().split("T")[0];
