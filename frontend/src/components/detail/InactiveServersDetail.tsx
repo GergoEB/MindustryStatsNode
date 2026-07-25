@@ -1,47 +1,9 @@
-import React, {useEffect, useState} from 'react';
-import {ServerListStats} from '../../../../common/models/serverData';
-import {InactiveServerInfo} from "../../../../common/models/RepositoryTypes.ts";
+import React from 'react';
 import CopyButton from "../CopyButton.tsx";
-import {ApiPacker} from "../../../../common/Packer.ts";
-
-const API_BASE = import.meta.env.VITE_API_URL || '';
+import { useInactiveServersData } from '../../hooks/useInactiveServersData.ts';
 
 const InactiveServersDetail: React.FC = () => {
-    const [inactiveServers, setInactiveServers] = useState<InactiveServerInfo[]>([]);
-    const [stats, setStats] = useState<ServerListStats[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [serversRes, statsRes] = await Promise.all([
-                    fetch(`${API_BASE}/api/inactive-servers`),
-                    fetch(`${API_BASE}/api/serverlist-stats`)
-                ]);
-
-                if (!serversRes.ok) {
-                    throw new Error('Failed to fetch inactive servers');
-                }
-                if (!statsRes.ok) {
-                    throw new Error('Failed to fetch server list stats');
-                }
-
-                const serversData: InactiveServerInfo[] = ApiPacker.unpack(await serversRes.json());
-                const statsData: ServerListStats[] = ApiPacker.unpack(await statsRes.json());
-
-                setInactiveServers(serversData);
-                setStats(statsData);
-                setLoading(false);
-            } catch (err) {
-                console.error('Error fetching inactive servers data:', err);
-                setError(err instanceof Error ? err.message : 'Unknown error');
-                setLoading(false);
-            }
-        };
-
-        fetchData();
-    }, []);
+    const { inactiveServers, stats, loading, error } = useInactiveServersData();
 
     const formatDate = (timestamp: number | null) => {
         if (!timestamp) return 'Never';
