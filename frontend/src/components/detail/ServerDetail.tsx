@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import ServerHistoryChart from "./ServerHistoryChart.tsx";
 import MapHistoryTable from "./table/MapHistoryTable.tsx";
 import MotdHistoryTable from "./table/MotdHistoryTable.tsx";
@@ -7,14 +7,13 @@ import { formatDate } from "../../util/general.ts";
 import CopyButton from "../CopyButton.tsx";
 import ShareButton from "../ShareButton.tsx";
 import {
-  ServerDetails,
   ServerElement,
 } from "../../../../common/models/serverData.ts";
 import { getModeName } from "../../../../common/Gamemode.ts";
+import { useServerDetails } from "../../hooks/useServerDetails.ts";
 
 const ServerDetail: React.FC<{ server: ServerElement }> = ({ server }) => {
-  const [details, setDetails] = useState<ServerDetails | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { details, loading, error } = useServerDetails(server.id);
 
   const serverData = server.currentData;
   const serverStatus = server.online
@@ -25,24 +24,6 @@ const ServerDetail: React.FC<{ server: ServerElement }> = ({ server }) => {
   const statusClass = server.online
     ? "bg-green-500/20 text-green-400 border-green-500/30"
     : "bg-red-500/20 text-red-400 border-red-500/30";
-
-  // Fetch additional server details (map and MOTD history, player peaks, uptime)
-  useEffect(() => {
-    const fetchDetails = async () => {
-      try {
-        const response = await fetch(`/api/servers/${server.id}/details`);
-        if (!response.ok) throw new Error("Failed to fetch server details");
-        const data: ServerDetails = await response.json();
-        setDetails(data);
-      } catch (error) {
-        console.error("Error fetching server details:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDetails();
-  }, [server]);
 
   const formatUptime = (percentage: number) => {
     return `${percentage.toFixed(1)}%`;
@@ -56,10 +37,11 @@ const ServerDetail: React.FC<{ server: ServerElement }> = ({ server }) => {
     );
   }
 
-  if (!details) {
+  if (error || !details) {
     return (
       <div className="h-full flex items-center justify-center">
         <p className="text-red-400">Failed to load server details.</p>
+        {error && <p className="text-red-300">{error.message}</p>}
       </div>
     );
   }
