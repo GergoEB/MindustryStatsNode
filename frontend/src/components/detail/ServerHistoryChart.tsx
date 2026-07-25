@@ -10,8 +10,14 @@ import {
   PointElement,
   Tooltip,
 } from "chart.js";
-import { ServerElement, ServerHistory } from "../../../../common/models/serverData.ts";
-import { DATE_RANGE_OPTIONS, DateRangeOption } from "../../util/dateRangeConsts.ts";
+import {
+  ServerElement,
+  ServerHistory,
+} from "../../../../common/models/serverData.ts";
+import {
+  DATE_RANGE_OPTIONS,
+  DateRangeOption,
+} from "../../util/dateRangeConsts.ts";
 import { HistoryType, useHistory } from "../../hooks/useHistory.ts";
 
 // Register Chart.js components
