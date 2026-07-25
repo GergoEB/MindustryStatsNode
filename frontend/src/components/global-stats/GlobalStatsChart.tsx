@@ -128,8 +128,8 @@ const GlobalStatsChart: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-5 items-stretch w-full min-h-[460px] h-[60vh]">
-          <div className="flex-1 border border-neutral-800/50 rounded-2xl p-4 bg-neutral-900 flex flex-col min-h-[340px] lg:min-h-0">
+        <div className="flex flex-col lg:flex-row gap-5 items-stretch w-full min-h-115 h-[60vh]">
+          <div className="flex-1 border border-neutral-800/50 rounded-2xl p-4 bg-neutral-900 flex flex-col min-h-85 lg:min-h-0">
             <div className="mb-3">
               <h4 className="text-neutral-400">
                 {viewMode === "lines" ? "Playercounts by Gamemode" : "Aggregated Global Playercounts"}
@@ -167,8 +167,8 @@ const GlobalStatsChart: React.FC = () => {
         </div>
 
         {selectedGamemode && (
-            <div className="flex flex-col lg:flex-row gap-5 items-stretch w-full min-h-[460px] h-[60vh]">
-              <div className="flex-1 border border-neutral-800/50 rounded-2xl p-4 bg-neutral-900 flex flex-col min-h-[340px] lg:min-h-0">
+            <div className="flex flex-col lg:flex-row gap-5 items-stretch w-full min-h-115 h-[60vh]">
+              <div className="flex-1 border border-neutral-800/50 rounded-2xl p-4 bg-neutral-900 flex flex-col min-h-85 lg:min-h-0">
                 <div className="mb-3">
                   <h4 className="text-[10px] font-black text-neutral-400 uppercase tracking-widest flex items-center gap-2">
                     Group Share for {" "}

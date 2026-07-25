@@ -1,10 +1,11 @@
 import React from 'react';
 import {formatUnsafeText, removeColors} from "../../util/mindustry.ts";
 import {countryCodeToFlag} from "../../util/general.ts";
+import { ServerElement } from '../../../../common/models/serverData.ts';
 
 const ServerItem: React.FC<{
-    server: any;
-    onSelect: (server: any) => void;
+    server: ServerElement;
+    onSelect: (server: ServerElement) => void;
     isSelected: boolean;
 }> = ({ server, onSelect, isSelected }) => {
     const serverData = server.currentData;
@@ -48,7 +49,7 @@ const ServerItem: React.FC<{
             </div>
             <div className="flex flex-col items-end">
                 <span className={`${statusClass} text-xs px-2 py-1 rounded-full border backdrop-blur-sm mb-1`}>
-                    {server.online ? 'Online - ' + serverData.ping + 'ms' : 'Offline'}
+                    {server.online ? 'Online - ' + (serverData?.ping ?? 'N/A') + 'ms' : 'Offline'}
                 </span>
                 {server.online && serverData && (
                     <div className="text-right">

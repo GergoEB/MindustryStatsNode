@@ -45,7 +45,7 @@ const ServerGroup: React.FC<{
                             className={`p-1.5 rounded-lg transition-colors ${
                                 isNetworkSelected
                                     ? 'bg-orange-500/30 text-orange-400/50'
-                                    : 'bg-neutral-700/30 text-gray-400 hover:text-orange-400 hover:bg-orange-700/10 hover:border-orange-500/30 hover:text-gray-300'
+                                    : 'bg-neutral-700/30 text-gray-400 hover:bg-orange-700/10 hover:border-orange-500/30 hover:text-gray-300'
                             }`}
                             title="View network graph"
                         >
