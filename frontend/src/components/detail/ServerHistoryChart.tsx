@@ -13,9 +13,8 @@ import {
 import { ServerElement } from "../../../../common/models/serverData.ts";
 import {
   useServerHistory,
-  DateRangeOption,
-  DATE_RANGE_OPTIONS,
 } from "../../hooks/useServerHistory.ts";
+import { DATE_RANGE_OPTIONS, DateRangeOption } from "../../util/dateRangeConsts.ts";
 
 // Register Chart.js components
 Chart.register(
