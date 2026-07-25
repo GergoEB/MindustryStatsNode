@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import ServerHistoryChart from './ServerHistoryChart.tsx';
+import ServerHistoryChart from "./ServerHistoryChart.tsx";
 import MapHistoryTable from './table/MapHistoryTable.tsx';
 import MotdHistoryTable from './table/MotdHistoryTable.tsx';
 import {removeColors} from "../../util/mindustry.ts";
@@ -65,12 +65,12 @@ const ServerDetail: React.FC<{ server: ServerElement }> = ({ server }) => {
                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 gap-4">
                         <div className="flex-1 min-w-0">
                             {serverData?.serverName && (
-                                <h1 className="text-xl sm:text-2xl font-bold text-white mb-2 break-words">
+                                <h1 className="text-xl sm:text-2xl font-bold text-white mb-2 wrap-break-word">
                                     {String(removeColors(serverData.serverName))}
                                 </h1>
                             )}
                             {serverData?.description && (
-                                <p className="text-gray-300 mb-4 text-sm sm:text-base break-words">
+                                <p className="text-gray-300 mb-4 text-sm sm:text-base wrap-break-word">
                                     {String(removeColors(serverData.description))}
                                 </p>
                             )}
@@ -103,7 +103,7 @@ const ServerDetail: React.FC<{ server: ServerElement }> = ({ server }) => {
                         </div>
 
                         {server.online && serverData && (
-                            <div className="text-left sm:text-right flex-shrink-0">
+                            <div className="text-left sm:text-right shrink-0">
                                 <div className="text-3xl sm:text-4xl font-bold text-orange-400 drop-shadow-[0_0_10px_rgba(249,115,22,0.3)]">
                                     {String(serverData.players)}
                                 </div>
@@ -116,7 +116,7 @@ const ServerDetail: React.FC<{ server: ServerElement }> = ({ server }) => {
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 text-xs sm:text-sm">
                             <div className="bg-neutral-700/30 backdrop-blur-sm border border-neutral-600/30 p-2 sm:p-3 rounded-lg">
                                 <span className="text-gray-400">Map: </span>
-                                <span className="font-medium text-white break-words">{String(removeColors(serverData.mapName)) || 'Unknown'}</span>
+                                <span className="font-medium text-white wrap-break-word">{String(removeColors(serverData.mapName)) || 'Unknown'}</span>
                             </div>
                             <div className="bg-neutral-700/30 backdrop-blur-sm border border-neutral-600/30 p-2 sm:p-3 rounded-lg">
                                 <span className="text-gray-400">Wave: </span>
@@ -124,7 +124,7 @@ const ServerDetail: React.FC<{ server: ServerElement }> = ({ server }) => {
                             </div>
                             <div className="bg-neutral-700/30 backdrop-blur-sm border border-neutral-600/30 p-2 sm:p-3 rounded-lg">
                                 <span className="text-gray-400">Mode: </span>
-                                <span className="font-medium text-white break-words">
+                                <span className="font-medium text-white wrap-break-word">
                                     {String(removeColors(serverData.modeName)) || getModeName(serverData.modeName, serverData.mode)}
                                 </span>
                             </div>
