@@ -1,4 +1,4 @@
-import {useEffect, useRef, useState} from 'react';
+import {useEffect, useRef} from 'react';
 import {
     CategoryScale,
     Chart,
@@ -11,89 +11,31 @@ import {
     Tooltip
 } from 'chart.js';
 import {NetworkDetails, ServerHistory} from "../../../../common/models/serverData.ts";
-import {ApiPacker} from "../../../../common/Packer.ts";
+import { useNetworkHistory } from '../../hooks/useNetworkHistory.ts';
+import { DATE_RANGE_OPTIONS, DateRangeOption } from '../../util/dateRangeConsts.ts';
 
 // Register Chart.js components
 Chart.register(LineElement, PointElement, LineController, CategoryScale, LinearScale, Tooltip, Legend, Filler);
 
-type DateRangeOption = '1d' | '7d' | '14d' | '3m' | '12m' | 'custom';
-
-interface DateRange {
-    label: string;
-    value: DateRangeOption;
-    hours?: number;
-}
-
-const DATE_RANGE_OPTIONS: DateRange[] = [
-    { label: '1 Day', value: '1d', hours: 24 },
-    { label: '7 Days', value: '7d', hours: 168 },
-    { label: '14 Days', value: '14d', hours: 336 },
-    { label: '3 Months', value: '3m', hours: 2190 },
-    { label: '12 Months', value: '12m', hours: 8760 },
-    { label: 'Custom', value: 'custom' },
-];
-
 const NetworkHistoryChart = ({network}: { network: NetworkDetails }) => {
     const chartRef = useRef<HTMLCanvasElement>(null);
     const chartInstance = useRef<Chart | null>(null);
-    const [selectedRange, setSelectedRange] = useState<DateRangeOption>('1d');
-    const [customStartDate, setCustomStartDate] = useState<string>('');
-    const [customEndDate, setCustomEndDate] = useState<string>('');
-    const [chartData, setChartData] = useState<Array<ServerHistory>>([]);
-    const [loading, setLoading] = useState(false);
-    const [fetchError, setFetchError] = useState<string | null>(null);
-    const [dateError, setDateError] = useState<string | null>(null);
+
+    const {
+        chartData,
+        loading,
+        fetchError,
+        dateError,
+        selectedRange,
+        setSelectedRange,
+        customStartDate,
+        setCustomStartDate,
+        customEndDate,
+        setCustomEndDate,
+      } = useNetworkHistory<ServerHistory>(`/api/networks/${network.id}/history`);
 
     // Get today's date for max attribute on date inputs
     const today = new Date().toISOString().split('T')[0];
-
-    // Fetch history data when range changes
-    useEffect(() => {
-        const fetchHistoryData = async () => {
-            // Validate custom date range inline
-            if (selectedRange === 'custom') {
-                if (!customStartDate || !customEndDate) {
-                    setDateError(null);
-                    return;
-                }
-                const startTs = new Date(customStartDate).getTime();
-                const endTs = new Date(customEndDate).getTime();
-                if (endTs <= startTs) {
-                    setDateError('End date must be after start date');
-                    return;
-                }
-                setDateError(null);
-            }
-
-            setLoading(true);
-            setFetchError(null);
-            try {
-                let url = `/api/networks/${network.id}/history?range=${selectedRange}`;
-
-                if (selectedRange === 'custom' && customStartDate && customEndDate) {
-                    const startTs = new Date(customStartDate).getTime();
-                    const endTs = new Date(customEndDate).getTime();
-                    url = `/api/networks/${network.id}/history?startDate=${startTs}&endDate=${endTs}`;
-                }
-
-                const response = await fetch(url);
-                if (response.ok) {
-                    const data = ApiPacker.unpack<ServerHistory>(await response.json());
-                    setChartData(data);
-                } else {
-                    console.error('Failed to fetch network history data. Status:', response.status, response.statusText);
-                    setFetchError('Unable to load network history data. Please try again later.');
-                }
-            } catch (error) {
-                console.error('Error fetching network history data:', error);
-                setFetchError('An error occurred while loading network history data. Please try again later.');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchHistoryData();
-    }, [selectedRange, customStartDate, customEndDate, network.id]);
 
     useEffect(() => {
         if (!chartRef.current) return;
