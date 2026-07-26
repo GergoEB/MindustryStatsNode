@@ -2,7 +2,6 @@ import React from 'react';
 import { useNavigate } from '@tanstack/react-router'
 import ServerGroup from './ServerGroup';
 import FlatServerList from './FlatServerList';
-import {ServerElement} from "../../../../common/models/serverData.ts";
 import SearchBar from "../SearchBar.tsx";
 import ToggleButton from "../ToggleButton.tsx";
 import SortDropdown from "../SortDropdown.tsx";
@@ -10,49 +9,31 @@ import Tooltip from "../Tooltip.tsx";
 import {useServerList} from "../../hooks/useServerList.ts";
 import {COMMIT, VERSION} from "../../../../common/version.ts";
 import {getConnectionStatusClasses} from "../../theme.ts";
-import { FetchStatus } from "../../hooks/useApi.ts";
 import { Route as InactiveRoute } from "../../routes/inactive.tsx";
 import { Route as GlobalRoute } from "../../routes/global.tsx";
+import { useSidebar } from "../../context/SidebarContext.tsx";
 
-interface MasterPanelProps {
-    isCollapsed: boolean;
-    onToggleCollapse: () => void;
-    connectionStatus: FetchStatus;
-    totalServers: number;
-    onlineServers: number;
-    totalPlayers: number;
-    serverGroups: Record<string, ServerElement[]>;
-    expandedGroups: Set<string>;
-    onToggleGroup: (groupName: string) => void;
-    onServerSelect: (server: ServerElement) => void;
-    onNetworkSelect: (groupId: number, groupName: string) => void;
-    selectedServer: ServerElement | null;
-    selectedNetworkId: number | null;
-    loading: boolean;
-    error: boolean;
-    lastUpdated: string;
-    isMobile: boolean;
-}
-
-const MasterPanel: React.FC<MasterPanelProps> = ({
-                                                      isCollapsed,
-                                                      onToggleCollapse,
-                                                      connectionStatus,
-                                                      totalServers,
-                                                      onlineServers,
-                                                      totalPlayers,
-                                                      serverGroups: rawServerGroups,
-                                                      expandedGroups,
-                                                      onToggleGroup,
-                                                      onServerSelect,
-                                                      onNetworkSelect,
-                                                      selectedServer,
-                                                      selectedNetworkId,
-                                                      loading,
-                                                      error,
-                                                      lastUpdated,
-                                                      isMobile
-                                                  }) => {
+const MasterPanel: React.FC = () => {
+    const {
+        isMasterPanelCollapsed: isCollapsed,
+        handleToggleCollapse: onToggleCollapse,
+        connectionStatus,
+        totalServers,
+        onlineServers,
+        totalPlayers,
+        serverGroups: rawServerGroups,
+        expandedGroups,
+        toggleGroupExpanded: onToggleGroup,
+        handleServerSelect: onServerSelect,
+        handleNetworkSelect: onNetworkSelect,
+        selectedServer,
+        selectedNetwork,
+        loading,
+        error,
+        lastUpdated,
+        isMobile,
+    } = useSidebar();
+    const selectedNetworkId = selectedNetwork?.id ?? null;
     const navigate = useNavigate();
     // Convert grouped data to flat array for the hook
     const rawServers = React.useMemo(() => {
