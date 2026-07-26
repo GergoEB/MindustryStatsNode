@@ -1,7 +1,28 @@
 import { createFileRoute } from '@tanstack/react-router';
+import DetailPanel from '../components/detail/DetailPanel';
+import { useSidebar } from '../context/SidebarContext.tsx';
 
-// The actual UI is rendered by the root route's layout (MasterPanel/DetailPanel);
-// this leaf just needs to exist so `/` matches within the route tree.
 export const Route = createFileRoute('/')({
-    component: () => null,
+    component: IndexComponent,
 });
+
+function IndexComponent() {
+    const {
+        selectedServer,
+        selectedNetwork,
+        isMobile,
+        showMasterPanel,
+        handleBackToMaster,
+    } = useSidebar();
+
+    return (
+        <DetailPanel
+            selectedServer={selectedServer}
+            selectedNetwork={selectedNetwork}
+            showingPanel={null}
+            isMobile={isMobile}
+            showMasterPanel={showMasterPanel}
+            onBackToMaster={handleBackToMaster}
+        />
+    );
+}

@@ -1,7 +1,28 @@
 import { createFileRoute } from '@tanstack/react-router';
+import DetailPanel from '../components/detail/DetailPanel';
+import { useSidebar } from '../context/SidebarContext.tsx';
 
-// Rendering is handled by the root layout, which maps this pathname to the
-// 'global-stats' panel type.
 export const Route = createFileRoute('/global')({
-    component: () => null,
+    component: GlobalComponent,
 });
+
+function GlobalComponent() {
+    const {
+        selectedServer,
+        selectedNetwork,
+        isMobile,
+        showMasterPanel,
+        handleBackToMaster,
+    } = useSidebar();
+
+    return (
+        <DetailPanel
+            selectedServer={selectedServer}
+            selectedNetwork={selectedNetwork}
+            showingPanel="global-stats"
+            isMobile={isMobile}
+            showMasterPanel={showMasterPanel}
+            onBackToMaster={handleBackToMaster}
+        />
+    );
+}

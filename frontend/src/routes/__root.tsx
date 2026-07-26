@@ -1,7 +1,6 @@
 import React from "react";
 import { createRootRoute, Outlet, HeadContent, Scripts } from "@tanstack/react-router";
 import MasterPanel from "../components/sidebar/MasterPanel";
-import DetailPanel from "../components/detail/DetailPanel";
 import { fetchServers } from "../hooks/useApi.ts";
 import { SidebarProvider, useSidebar } from "../context/SidebarContext.tsx";
 import appCss from "../index.css?url";
@@ -38,27 +37,13 @@ export const Route = createRootRoute({
 });
 
 function RootLayout() {
-  const { isMobile, showMasterPanel, selectedServer, selectedNetwork, panel, handleBackToMaster } =
-    useSidebar();
+  const { isMobile, showMasterPanel } = useSidebar();
 
   return (
     <div className="h-screen bg-linear-to-br from-stone-900 via-neutral-900 to-stone-900 text-white flex overflow-hidden">
       <AnimatedBackground />
       {(!isMobile || showMasterPanel) && <MasterPanel />}
-      {(!isMobile || !showMasterPanel) && (
-        <DetailPanel
-          selectedServer={selectedServer}
-          selectedNetwork={selectedNetwork}
-          isMobile={isMobile}
-          showMasterPanel={showMasterPanel}
-          onBackToMaster={handleBackToMaster}
-          showingPanel={panel}
-        />
-      )}
-      {/* Child routes only carry params/loaders now; the panel above renders the actual UI. */}
-      <div className="hidden">
-        <Outlet />
-      </div>
+      {(!isMobile || !showMasterPanel) && <Outlet />}
     </div>
   );
 }

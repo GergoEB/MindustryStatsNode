@@ -13,14 +13,6 @@ import useApi, { FetchStatus } from "../hooks/useApi.ts";
 import { useResponsive } from "../hooks/useResponsive";
 import { isHub } from "../util/mindustry.ts";
 
-export type PanelType =
-  "server" | "network" | "global-stats" | "inactive-servers" | null;
-
-const PANEL_BY_PATH: Record<string, PanelType> = {
-  "/inactive": "inactive-servers",
-  "/global": "global-stats",
-};
-
 interface SidebarContextValue {
   isMasterPanelCollapsed: boolean;
   showMasterPanel: boolean;
@@ -41,7 +33,6 @@ interface SidebarContextValue {
   error: boolean;
   lastUpdated: string;
   isMobile: boolean;
-  panel: PanelType;
 }
 
 const SidebarContext = createContext<SidebarContextValue | null>(null);
@@ -93,12 +84,6 @@ export const SidebarProvider: React.FC<SidebarProviderProps> = ({
 
   const { connectionStatus, data } = useApi(initialData);
   const { isMobile } = useResponsive();
-
-  const panel: PanelType = serverId
-    ? "server"
-    : networkId
-      ? "network"
-      : (PANEL_BY_PATH[pathname] ?? null);
 
   // On mobile, only the home route ('/') shows the master list.
   useEffect(() => {
@@ -280,7 +265,6 @@ export const SidebarProvider: React.FC<SidebarProviderProps> = ({
     error,
     lastUpdated,
     isMobile,
-    panel,
   };
 
   return (

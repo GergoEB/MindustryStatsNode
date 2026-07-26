@@ -1,7 +1,28 @@
 import { createFileRoute } from '@tanstack/react-router';
+import DetailPanel from '../components/detail/DetailPanel';
+import { useSidebar } from '../context/SidebarContext.tsx';
 
-// Rendering is handled by the root layout, which maps this pathname to the
-// 'inactive-servers' panel type.
 export const Route = createFileRoute('/inactive')({
-    component: () => null,
+    component: InactiveComponent,
 });
+
+function InactiveComponent() {
+    const {
+        selectedServer,
+        selectedNetwork,
+        isMobile,
+        showMasterPanel,
+        handleBackToMaster,
+    } = useSidebar();
+
+    return (
+        <DetailPanel
+            selectedServer={selectedServer}
+            selectedNetwork={selectedNetwork}
+            showingPanel="inactive-servers"
+            isMobile={isMobile}
+            showMasterPanel={showMasterPanel}
+            onBackToMaster={handleBackToMaster}
+        />
+    );
+}

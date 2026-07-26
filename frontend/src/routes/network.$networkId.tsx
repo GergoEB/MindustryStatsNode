@@ -1,7 +1,28 @@
 import { createFileRoute } from '@tanstack/react-router';
+import DetailPanel from '../components/detail/DetailPanel';
+import { useSidebar } from '../context/SidebarContext.tsx';
 
-// Rendering is handled by the root layout, which reads `networkId` via
-// `useParams({ strict: false })` to select the detail panel.
 export const Route = createFileRoute('/network/$networkId')({
-    component: () => null,
+    component: NetworkComponent,
 });
+
+function NetworkComponent() {
+    const {
+        selectedServer,
+        selectedNetwork,
+        isMobile,
+        showMasterPanel,
+        handleBackToMaster,
+    } = useSidebar();
+
+    return (
+        <DetailPanel
+            selectedServer={selectedServer}
+            selectedNetwork={selectedNetwork}
+            showingPanel="network"
+            isMobile={isMobile}
+            showMasterPanel={showMasterPanel}
+            onBackToMaster={handleBackToMaster}
+        />
+    );
+}
