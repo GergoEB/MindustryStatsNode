@@ -1,8 +1,5 @@
 import React from "react";
-import {
-  ServerElement,
-  NetworkDetails,
-} from "../../../../common/models/serverData";
+import { ServerElement } from "../../../../common/models/serverData";
 import ServerDetail from "./ServerDetail";
 import NetworkDetail from "./NetworkDetail";
 import InactiveServersDetail from "./InactiveServersDetail";
@@ -10,7 +7,7 @@ import GlobalStatsChart from "../global-stats/GlobalStatsChart.tsx";
 
 interface DetailPanelProps {
   selectedServer: ServerElement | null;
-  selectedNetwork: NetworkDetails | null;
+  selectedNetworkId: number | null;
   showingPanel:
     "server" | "network" | "global-stats" | "inactive-servers" | null;
   isMobile: boolean;
@@ -93,7 +90,7 @@ const PanelShell: React.FC<{
 
 const DetailPanel: React.FC<DetailPanelProps> = ({
   selectedServer,
-  selectedNetwork,
+  selectedNetworkId,
   isMobile,
   showMasterPanel,
   onBackToMaster,
@@ -113,8 +110,8 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
           headerTitle="Network Details"
           onBack={onBackToMaster}
         >
-          {selectedNetwork ? (
-            <NetworkDetail network={selectedNetwork} />
+          {selectedNetworkId != null ? (
+            <NetworkDetail networkId={selectedNetworkId} />
           ) : (
             <EmptyState
               title="Select a Server or Network"

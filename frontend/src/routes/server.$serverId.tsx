@@ -7,18 +7,20 @@ export const Route = createFileRoute('/server/$serverId')({
 });
 
 function ServerComponent() {
-    const {
-        selectedServer,
-        selectedNetwork,
-        isMobile,
-        showMasterPanel,
-        handleBackToMaster,
-    } = useSidebar();
+    const { serverId } = Route.useParams();
+    const { serverGroups, isMobile, showMasterPanel, handleBackToMaster } =
+        useSidebar();
+
+    const parsedId = Number(serverId);
+    const selectedServer =
+        Object.values(serverGroups)
+            .flat()
+            .find((s) => s.id === parsedId) ?? null;
 
     return (
         <DetailPanel
             selectedServer={selectedServer}
-            selectedNetwork={selectedNetwork}
+            selectedNetworkId={null}
             showingPanel="server"
             isMobile={isMobile}
             showMasterPanel={showMasterPanel}

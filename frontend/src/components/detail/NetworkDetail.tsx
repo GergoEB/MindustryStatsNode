@@ -2,11 +2,10 @@ import React, { useState } from "react";
 import NetworkHistoryChart from "./NetworkHistoryChart.tsx";
 import CopyButton from "../CopyButton.tsx";
 import ShareButton from "../ShareButton.tsx";
-import { NetworkDetails } from "../../../../common/models/serverData.ts";
 import { useNetworkDetail } from "../../hooks/useNetworkDetail.ts";
 
-const NetworkDetail: React.FC<{ network: NetworkDetails }> = ({ network }) => {
-  const { details, loading, error } = useNetworkDetail(network.id);
+const NetworkDetail: React.FC<{ networkId: number }> = ({ networkId }) => {
+  const { details, loading, error } = useNetworkDetail(networkId);
   const [showIp, setShowIp] = useState(true);
 
   if (loading) {

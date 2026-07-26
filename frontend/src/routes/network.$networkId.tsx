@@ -7,18 +7,13 @@ export const Route = createFileRoute('/network/$networkId')({
 });
 
 function NetworkComponent() {
-    const {
-        selectedServer,
-        selectedNetwork,
-        isMobile,
-        showMasterPanel,
-        handleBackToMaster,
-    } = useSidebar();
+    const { networkId } = Route.useParams();
+    const { isMobile, showMasterPanel, handleBackToMaster } = useSidebar();
 
     return (
         <DetailPanel
-            selectedServer={selectedServer}
-            selectedNetwork={selectedNetwork}
+            selectedServer={null}
+            selectedNetworkId={Number(networkId)}
             showingPanel="network"
             isMobile={isMobile}
             showMasterPanel={showMasterPanel}

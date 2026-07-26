@@ -18,7 +18,7 @@ function IndexComponent() {
     return (
         <DetailPanel
             selectedServer={selectedServer}
-            selectedNetwork={selectedNetwork}
+            selectedNetworkId={selectedNetwork?.id ?? null}
             showingPanel={null}
             isMobile={isMobile}
             showMasterPanel={showMasterPanel}

@@ -18,7 +18,7 @@ function GlobalComponent() {
     return (
         <DetailPanel
             selectedServer={selectedServer}
-            selectedNetwork={selectedNetwork}
+            selectedNetworkId={selectedNetwork?.id ?? null}
             showingPanel="global-stats"
             isMobile={isMobile}
             showMasterPanel={showMasterPanel}

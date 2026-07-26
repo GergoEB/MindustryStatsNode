@@ -18,7 +18,7 @@ function InactiveComponent() {
     return (
         <DetailPanel
             selectedServer={selectedServer}
-            selectedNetwork={selectedNetwork}
+            selectedNetworkId={selectedNetwork?.id ?? null}
             showingPanel="inactive-servers"
             isMobile={isMobile}
             showMasterPanel={showMasterPanel}
