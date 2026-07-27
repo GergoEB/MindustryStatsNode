@@ -1,23 +1,26 @@
-import { createFileRoute } from '@tanstack/react-router';
-import DetailPanel from '../components/detail/DetailPanel';
-import { useSidebar } from '../context/SidebarContext.tsx';
+import { createFileRoute } from "@tanstack/react-router";
+import { DetailShell } from "../components/sidebar/DetailShell.tsx";
+import { EmptyState } from "../components/detail/EmptyState.tsx";
+import NetworkDetail from "../components/detail/NetworkDetail.tsx";
 
-export const Route = createFileRoute('/network/$networkId')({
-    component: NetworkComponent,
+export const Route = createFileRoute("/network/$networkId")({
+  component: NetworkComponent,
 });
 
 function NetworkComponent() {
-    const { networkId } = Route.useParams();
-    const { isMobile, showMasterPanel, handleBackToMaster } = useSidebar();
+  const { networkId } = Route.useParams();
 
-    return (
-        <DetailPanel
-            selectedServer={null}
-            selectedNetworkId={Number(networkId)}
-            showingPanel="network"
-            isMobile={isMobile}
-            showMasterPanel={showMasterPanel}
-            onBackToMaster={handleBackToMaster}
+  return (
+    <DetailShell title="Network">
+      {networkId != null ? (
+        <NetworkDetail networkId={Number(networkId)} />
+      ) : (
+        <EmptyState
+          title="Select a Server or Network"
+          message="Network not found"
+          isError
         />
-    );
+      )}
+    </DetailShell>
+  );
 }

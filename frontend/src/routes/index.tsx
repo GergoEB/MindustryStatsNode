@@ -1,28 +1,18 @@
-import { createFileRoute } from '@tanstack/react-router';
-import DetailPanel from '../components/detail/DetailPanel';
-import { useSidebar } from '../context/SidebarContext.tsx';
+import { createFileRoute } from "@tanstack/react-router";
+import { DetailShell } from "../components/sidebar/DetailShell";
+import { EmptyState } from "../components/detail/EmptyState";
 
-export const Route = createFileRoute('/')({
-    component: IndexComponent,
+export const Route = createFileRoute("/")({
+  component: IndexComponent,
 });
 
 function IndexComponent() {
-    const {
-        selectedServer,
-        selectedNetwork,
-        isMobile,
-        showMasterPanel,
-        handleBackToMaster,
-    } = useSidebar();
-
-    return (
-        <DetailPanel
-            selectedServer={selectedServer}
-            selectedNetworkId={selectedNetwork?.id ?? null}
-            showingPanel={null}
-            isMobile={isMobile}
-            showMasterPanel={showMasterPanel}
-            onBackToMaster={handleBackToMaster}
-        />
-    );
+  return (
+    <DetailShell title="Home">
+      <EmptyState
+        title="Select a Server or Network"
+        message="Choose a server or network from the list to view detailed information"
+      />
+    </DetailShell>
+  );
 }

@@ -1,30 +1,29 @@
-import { createFileRoute } from '@tanstack/react-router';
-import DetailPanel from '../components/detail/DetailPanel';
-import { useSidebar } from '../context/SidebarContext.tsx';
+import { createFileRoute } from "@tanstack/react-router";
+import { useSidebar } from "../context/SidebarContext.tsx";
+import { EmptyState } from "../components/detail/EmptyState.tsx";
+import ServerDetail from "../components/detail/ServerDetail.tsx";
 
-export const Route = createFileRoute('/server/$serverId')({
-    component: ServerComponent,
+export const Route = createFileRoute("/server/$serverId")({
+  component: ServerComponent,
 });
 
 function ServerComponent() {
-    const { serverId } = Route.useParams();
-    const { serverGroups, isMobile, showMasterPanel, handleBackToMaster } =
-        useSidebar();
+  const { serverId } = Route.useParams();
+  const { serverGroups } = useSidebar();
 
-    const parsedId = Number(serverId);
-    const selectedServer =
-        Object.values(serverGroups)
-            .flat()
-            .find((s) => s.id === parsedId) ?? null;
+  const parsedId = Number(serverId);
+  const selectedServer =
+    Object.values(serverGroups)
+      .flat()
+      .find((s) => s.id === parsedId) ?? null;
 
-    return (
-        <DetailPanel
-            selectedServer={selectedServer}
-            selectedNetworkId={null}
-            showingPanel="server"
-            isMobile={isMobile}
-            showMasterPanel={showMasterPanel}
-            onBackToMaster={handleBackToMaster}
-        />
-    );
+  return selectedServer ? (
+    <ServerDetail server={selectedServer} />
+  ) : (
+    <EmptyState
+      title="Select a Server or Network"
+      message="Server not found"
+      isError
+    />
+  );
 }

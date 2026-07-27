@@ -1,28 +1,15 @@
 import { createFileRoute } from '@tanstack/react-router';
-import DetailPanel from '../components/detail/DetailPanel';
-import { useSidebar } from '../context/SidebarContext.tsx';
+import InactiveServersDetail from '../components/detail/InactiveServersDetail.tsx';
+import { DetailShell } from '../components/sidebar/DetailShell.tsx';
 
 export const Route = createFileRoute('/inactive')({
-    component: InactiveComponent,
+  component: InactiveServers
 });
 
-function InactiveComponent() {
-    const {
-        selectedServer,
-        selectedNetwork,
-        isMobile,
-        showMasterPanel,
-        handleBackToMaster,
-    } = useSidebar();
-
-    return (
-        <DetailPanel
-            selectedServer={selectedServer}
-            selectedNetworkId={selectedNetwork?.id ?? null}
-            showingPanel="inactive-servers"
-            isMobile={isMobile}
-            showMasterPanel={showMasterPanel}
-            onBackToMaster={handleBackToMaster}
-        />
-    );
+function InactiveServers() {
+  return (
+    <DetailShell title="Inactive Servers">
+      <InactiveServersDetail />
+    </DetailShell>
+  )
 }

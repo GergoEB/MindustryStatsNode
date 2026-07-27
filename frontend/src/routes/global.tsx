@@ -1,28 +1,15 @@
-import { createFileRoute } from '@tanstack/react-router';
-import DetailPanel from '../components/detail/DetailPanel';
-import { useSidebar } from '../context/SidebarContext.tsx';
+import { createFileRoute } from "@tanstack/react-router";
+import GlobalStatsChart from "../components/global-stats/GlobalStatsChart.tsx";
+import { DetailShell } from "../components/sidebar/DetailShell.tsx";
 
-export const Route = createFileRoute('/global')({
-    component: GlobalComponent,
+export const Route = createFileRoute("/global")({
+  component: GlobalComponent,
 });
 
 function GlobalComponent() {
-    const {
-        selectedServer,
-        selectedNetwork,
-        isMobile,
-        showMasterPanel,
-        handleBackToMaster,
-    } = useSidebar();
-
-    return (
-        <DetailPanel
-            selectedServer={selectedServer}
-            selectedNetworkId={selectedNetwork?.id ?? null}
-            showingPanel="global-stats"
-            isMobile={isMobile}
-            showMasterPanel={showMasterPanel}
-            onBackToMaster={handleBackToMaster}
-        />
-    );
+  return (
+    <DetailShell title="Global Stats">
+      <GlobalStatsChart />
+    </DetailShell>
+  );
 }
