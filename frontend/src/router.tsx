@@ -10,6 +10,18 @@ export function getRouter() {
     defaultPreload: 'intent',
     scrollRestoration: true,
     defaultPreloadStaleTime: 0,
+    defaultErrorComponent: ({ error }) => {
+        // Log error on server terminal
+        console.error('TanStack Router SSR Error:', error);
+        
+        return (
+          <div>
+            <h1>Something went wrong!</h1>
+            <pre>{error.message}</pre>
+            <pre>{error.stack}</pre>
+          </div>
+        );
+      },
   });
 }
 

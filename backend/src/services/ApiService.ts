@@ -59,7 +59,7 @@ export class ApiService {
     logger.info("Starting API Service...");
 
     const serverBuildPath = path.join(process.cwd(), 'public/server/server.js');
-    const { default: handleSsrRequest } = await import(serverBuildPath);
+    const { default: { fetch: handleSsrRequest } } = await import(serverBuildPath);
 
     this.app = new Elysia();
 
@@ -83,7 +83,7 @@ export class ApiService {
 
       try {
         // Pass the native Request object into TanStack's server handler
-        const response = await handleSsrRequest({ request });
+        const response = await handleSsrRequest(request);
         return response;
       } catch (error) {
         logger.error("SSR Rendering Error:", error);
