@@ -46,7 +46,7 @@ export function useInactiveServersData(): UseInactiveServersDataResult {
     } finally {
       setLoading(false);
     }
-  });
+  }, [setInactiveServers, setStats, setLoading, setError]);
 
   useEffect(() => {
     fetchData();

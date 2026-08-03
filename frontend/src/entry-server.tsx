@@ -2,10 +2,10 @@ import {
   createRequestHandler,
   defaultRenderHandler,
 } from '@tanstack/react-router/ssr/server'
-import { createRouter } from './router'
+import { getRouter } from './router'
 
 export async function render({ request }: { request: Request }) {
-  const handler = createRequestHandler({ request, createRouter })
+  const handler = createRequestHandler({ request, createRouter: getRouter })
 
   return await handler(defaultRenderHandler)
 }
