@@ -10,6 +10,7 @@
     "dev": "bun run --inspect-wait src/index.ts"
   },
   "dependencies": {
+    "@elysia/cors": "^1.4.2",
     "@elysia/static": "^1.4.11",
     "@types/bun": "^1.3.14",
     "bytebuffer": "^5.0.1",

@@ -5,7 +5,7 @@ import { tanstackStart } from '@tanstack/react-start/plugin/vite';
 
 export default defineConfig({
   server: {
-    port: 3000,
+    port: 4000,
     proxy: {
       // Proxy API calls through to the Bun + Elysia backend during dev.
       '/api': {

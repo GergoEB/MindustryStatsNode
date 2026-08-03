@@ -18,6 +18,7 @@ import {ServerShareEntry} from "../../../common/models/GlobalStatsTypes.js";
 import {ApiPacker} from "../../../common/Packer.js";
 import {modeNameToIntOrNull} from "../../../common/Gamemode.js";
 import { withCache } from '../utils/RouteCache.js';
+import { cors } from '@elysia/cors'
 
 const logger = createLogger('ApiService');
 
