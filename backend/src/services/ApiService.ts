@@ -60,19 +60,7 @@ export class ApiService {
 
     this.app = new Elysia();
 
-    this.app.onRequest(({request, set}) => {
-      const origin = request.headers.get('origin');
-      const allowedOrigin = this.config.CORS_ORIGIN;
-
-      if (allowedOrigin) {
-        set.headers['Access-Control-Allow-Origin'] = Array.isArray(allowedOrigin)
-          ? (origin && allowedOrigin.includes(origin) ? origin : allowedOrigin[0])
-          : allowedOrigin;
-      }
-      set.headers['Access-Control-Allow-Credentials'] = 'true';
-      set.headers['Access-Control-Allow-Methods'] = 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS';
-      set.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization';
-    });
+    this.app.use(cors({ origin: this.config.CORS_ORIGIN, credentials: true }));
 
     this.app.options('*', ({set}) => {
       set.status = 204;
