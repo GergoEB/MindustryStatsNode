@@ -56,41 +56,48 @@ export class ApiService {
   }
 
   async start(): Promise<void> {
-    logger.info('Starting API Service...');
+    logger.info("Starting API Service...");
+
+    const serverBuildPath = path.join(process.cwd(), 'public/server/server.js');
+    const { default: handleSsrRequest } = await import(serverBuildPath);
 
     this.app = new Elysia();
 
     this.app.use(cors({ origin: this.config.CORS_ORIGIN, credentials: true }));
 
-    this.app.options('*', ({set}) => {
-      set.status = 204;
-      return '';
-    });
-
-    // Expose web files
     this.app.use(staticPlugin({
-      assets: path.join(process.cwd(), 'public'),
+      assets: path.join(process.cwd(), 'public/client'),
       prefix: '/',
-      indexHTML: true,
     }));
-
+    
     this.setupRoutes();
 
-    // SPA catch-all: serve index.html for any non-API routes (enables deep linking)
-    this.app.get('*', ({request, set}) => {
+    this.app.all("*", async ({ request, set }) => {
       const urlPath = new URL(request.url).pathname;
-      if (!urlPath.startsWith('/api')) {
-        return Bun.file(path.join(process.cwd(), 'public', 'index.html'));
-      } else {
+
+      // Fallback 404 for unhandled API endpoints
+      if (urlPath.startsWith("/api")) {
         set.status = 404;
-        return {error: 'Not found'};
+        return { error: "what are you doing buddy ?" };
+      }
+
+      try {
+        // Pass the native Request object into TanStack's server handler
+        const response = await handleSsrRequest({ request });
+        return response;
+      } catch (error) {
+        logger.error("SSR Rendering Error:", error);
+        set.status = 500;
+        return "Internal Server Error";
       }
     });
 
     // Create HTTP server but don't start it yet - will be started by main app
     this.httpServer = http.createServer();
 
-    logger.info('API Service initialized (HTTP server will be started by main app)');
+    logger.info(
+      "API Service initialized (HTTP server will be started by main app)",
+    );
   }
 
   /**
