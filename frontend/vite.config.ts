@@ -19,5 +19,5 @@ export default defineConfig({
     tanstackStart({
     }),
     viteReact(),
-  ],
+  ]
 });
