@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { ApiPacker } from "../../../common/Packer";
 import { DateRangeOption } from "../util/dateRangeConsts";
+import { getBaseUrl } from "../util/getApi";
 
 export enum HistoryType {
   Network = "network",
@@ -8,11 +9,12 @@ export enum HistoryType {
 }
 
 function getEndpointBaseUrl(id: number | string, type: HistoryType): string {
+  const endpointBaseUrl = getBaseUrl();
   switch (type) {
     case HistoryType.Network:
-      return `/api/networks/${id}/history`;
+      return `${endpointBaseUrl}/api/networks/${id}/history`;
     case HistoryType.Server:
-      return `/api/servers/${id}/history`;
+      return `${endpointBaseUrl}/api/servers/${id}/history`;
     default:
       throw new Error(`Unknown history type: ${type}`);
   }

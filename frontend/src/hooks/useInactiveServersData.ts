@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { InactiveServerInfo } from '../../../common/models/RepositoryTypes';
 import { ServerListStats } from '../../../common/models/serverData';
 import { ApiPacker } from '../../../common/Packer';
+import { getBaseUrl } from '../util/getApi';
 
 interface UseInactiveServersDataResult {
   inactiveServers: InactiveServerInfo[];
@@ -22,9 +23,10 @@ export function useInactiveServersData(): UseInactiveServersDataResult {
     setError(null);
 
     try {
+      const baseUrl = getBaseUrl();
       const [serversRes, statsRes] = await Promise.all([
-        fetch(`api/inactive-servers`),
-        fetch(`api/serverlist-stats`),
+        fetch(`${baseUrl}/api/inactive-servers`),
+        fetch(`${baseUrl}/api/serverlist-stats`),
       ]);
 
       if (!serversRes.ok) throw new Error('Failed to fetch inactive servers');

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { ServerDetails } from "../../../common/models/serverData";
+import { getBaseUrl } from "../util/getApi";
 
 export function useServerDetails(serverId: string | number) {
   const [details, setDetails] = useState<ServerDetails | null>(null);
@@ -12,7 +13,8 @@ export function useServerDetails(serverId: string | number) {
 
     const fetchDetails = async () => {
       try {
-        const response = await fetch(`/api/servers/${serverId}/details`);
+        const baseUrl = getBaseUrl();
+        const response = await fetch(`${baseUrl}/api/servers/${serverId}/details`);
         if (!response.ok) throw new Error("Failed to fetch server details");
 
         const data: ServerDetails = await response.json();

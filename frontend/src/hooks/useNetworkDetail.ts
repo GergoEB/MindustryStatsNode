@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { NetworkDetails } from '../../../common/models/serverData';
+import { getBaseUrl } from '../util/getApi';
 
 export function useNetworkDetail(networkId: string | number) {
   const [details, setDetails] = useState<NetworkDetails | null>(null);
@@ -13,7 +14,8 @@ export function useNetworkDetail(networkId: string | number) {
 
     const fetchDetails = async () => {
       try {
-        const response = await fetch(`/api/networks/${networkId}/details`);
+        const baseUrl = getBaseUrl();
+        const response = await fetch(`${baseUrl}/api/networks/${networkId}/details`);
         if (!response.ok) throw new Error('Failed to fetch network details');
         
         const data: NetworkDetails = await response.json();

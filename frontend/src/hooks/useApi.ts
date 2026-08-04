@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { createServerFn } from '@tanstack/react-start';
 import { ServerElement } from '../../../common/models/serverData.ts';
 import { ApiPacker } from '../../../common/Packer.ts';
+import { getBaseUrl } from '../util/getApi.ts';
+import { useClientConfig } from './useClientConfig.ts';
 
 // We adapted the status to fit HTTP requests instead of persistent sockets
 export type FetchStatus = 'loading' | 'success' | 'error';
@@ -13,7 +15,8 @@ export type FetchStatus = 'loading' | 'success' | 'error';
  * be serialized straight into the loader payload.
  */
 export const fetchServers = createServerFn({ method: 'GET' }).handler(async () => {
-    const response = await fetch('/api/servers');
+    const baseUrl = getBaseUrl();
+    const response = await fetch(`${baseUrl}/api/servers`);
 
     if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -32,11 +35,28 @@ const useApi = (initialData: ServerElement[] | null = null) => {
     const [data, setData] = useState<ServerElement[] | null>(initialData);
     const [connectionStatus, setStatus] = useState<FetchStatus>(initialData ? 'success' : 'loading');
     const [error, setError] = useState<Error | null>(null);
-
+    const { config: clientConfig, loading: isConfigLoading, error: configError } = useClientConfig();
+  
     useEffect(() => {
         // This is a React safety flag. It prevents React from trying to update
         // the state if the user navigates away from the page before the fetch finishes.
         let isMounted = true;
+
+        if (isConfigLoading) {
+            setStatus('loading');
+            return;
+        }
+        if (configError) {
+            setStatus('error');
+            setError(configError);
+            return;
+        }
+        if (!clientConfig) {
+            setStatus('error');
+            setError(new Error('No config'));
+            return;
+        }
+
 
         const fetchServerStats = async () => {
             try {
@@ -69,8 +89,8 @@ const useApi = (initialData: ServerElement[] | null = null) => {
             fetchServerStats().then(() => {});
         }
 
-        // 2. Poll every 10 seconds (10000ms) to sync perfectly with your backend/Cloudflare cache
-        const pollInterval = setInterval(fetchServerStats, 10000);
+        // 2. Poll at configured increments
+        const pollInterval = setInterval(fetchServerStats, clientConfig.refreshInterval);
 
         // 3. Cleanup function: React runs this when the component unmounts/is destroyed
         return () => {
