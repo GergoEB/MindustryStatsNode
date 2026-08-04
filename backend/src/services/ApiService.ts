@@ -6,7 +6,7 @@ import {Elysia, t} from 'elysia';
 import {staticPlugin} from '@elysia/static';
 import http from 'http';
 import path from "path";
-import {BUILD_DATE, COMMIT, VERSION} from "../../../common/version.js";
+import {BUILD_DATE, buildInfo, COMMIT, VERSION} from "../../../common/version.js";
 import {ServerElement} from "../../../common/models/serverData.js";
 import {mindustryApp} from "../index.js";
 import {getAggregatedHistory, getGlobalPlayerHistory, getNetworkPlayerHistory} from "../repositories/StatsRepository.js";
@@ -131,18 +131,10 @@ export class ApiService {
   }
 
   private setupRoutes(): void {
-    // Health check endpoint
-    this.app.get('/health', async () => {
+    this.app.get('/config', async () => {
       return {
-        status: 'healthy',
-        service: 'mindustry-stats',
-        timestamp: new Date().toISOString(),
-        pid: process.pid,
-        build: {
-          commit: COMMIT,
-          buildDate: BUILD_DATE,
-          version: VERSION
-        }
+        refreshInterval: this.config.DATA_COLLECTION_INTERVAL_MS,
+        build: buildInfo,
       };
     }, { query: StrictNoQuery });
 

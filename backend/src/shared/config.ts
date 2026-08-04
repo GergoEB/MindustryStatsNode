@@ -33,6 +33,7 @@ export interface ApiServiceConfig extends BaseServiceConfig {
   PORT: number;
   CORS_ORIGIN: string;
   GRAPH_MAX_POINTS: number;
+  DATA_COLLECTION_INTERVAL_MS: number;
 }
 
 export interface WebSocketServiceConfig extends BaseServiceConfig {
