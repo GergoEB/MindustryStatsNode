@@ -4,6 +4,8 @@ import MasterPanel from "../components/sidebar/MasterPanel";
 import { fetchServers } from "../hooks/useApi.ts";
 import { SidebarProvider, useSidebar } from "../context/SidebarContext.tsx";
 import appCss from "../index.css?url";
+import { ApiPacker } from "../../../common/Packer.ts";
+import { ServerElement } from "../../../common/models/serverData.ts";
 
 const AnimatedBackground: React.FC = () => (
   <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -49,7 +51,7 @@ function RootLayout() {
 }
 
 function RootComponent() {
-  const { initialData } = Route.useLoaderData();
+  const initialData = ApiPacker.unpack<ServerElement>(Route.useLoaderData().initialData);
 
   return (
     <html lang="en">

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createServerFn } from '@tanstack/react-start';
 import { ServerElement } from '../../../common/models/serverData.ts';
-import { ApiPacker } from '../../../common/Packer.ts';
+import { ApiPacker, ApiResponsePacket } from '../../../common/Packer.ts';
 import { getBaseUrl } from '../util/getApi.ts';
 import { useClientConfig } from './useClientConfig.ts';
 
@@ -14,7 +14,7 @@ export type FetchStatus = 'loading' | 'success' | 'error';
  * client polling below uses, and returns already-unpacked data so it can
  * be serialized straight into the loader payload.
  */
-export const fetchServers = createServerFn({ method: 'GET' }).handler(async () => {
+export const fetchServers = createServerFn({ method: 'GET' }).handler(async (): Promise<ApiResponsePacket> => {
     const baseUrl = getBaseUrl();
     const response = await fetch(`${baseUrl}/api/servers`);
 
@@ -22,7 +22,7 @@ export const fetchServers = createServerFn({ method: 'GET' }).handler(async () =
         throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    return ApiPacker.unpack<ServerElement>(await response.json());
+    return await response.json();
 });
 
 /**
