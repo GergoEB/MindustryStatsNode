@@ -29,8 +29,7 @@ const MasterPanel: React.FC = () => {
     lastUpdated,
     isMobile,
   } = useSidebar();
-  const { networkId } = useParams({ from: "/network/$networkId" });
-  const { serverId } = useParams({ from: "/server/$serverId" });
+  const { networkId, serverId } = useParams({ strict: false })
 
   // Design decision: NaN is used to indicate no or invalid selection - literally means "not a number"
   const selectedNetworkId = Number(networkId);
