@@ -4,14 +4,12 @@ import {ServerElement} from '../../../../common/models/serverData';
 
 interface FlatServerListProps {
   servers: ServerElement[];
-  onServerSelect: (server: ServerElement) => void;
-  selectedServer: ServerElement | null;
+  selectedServerId: number;
 }
 
 const FlatServerList: React.FC<FlatServerListProps> = ({
   servers,
-  onServerSelect,
-  selectedServer
+  selectedServerId
 }) => {
   if (servers.length === 0) {
     return (
@@ -28,8 +26,7 @@ const FlatServerList: React.FC<FlatServerListProps> = ({
           <ServerItem
             key={`${server.host}-${server.port}`}
             server={server}
-            onSelect={onServerSelect}
-            isSelected={selectedServer?.id === server.id}
+            isSelected={selectedServerId === server.id}
           />
         ))}
       </div>

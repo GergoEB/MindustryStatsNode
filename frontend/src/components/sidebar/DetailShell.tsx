@@ -34,13 +34,13 @@ const MobileHeader: React.FC<{ title: string; onBack: () => void }> = ({
 );
 
 export const DetailShell: React.FC<DetailShellProps> = ({ title, children }) => {
-  const { isMobile, handleBackToMaster } = useSidebar();
-  const showHeader = isMobile && !!handleBackToMaster;
+  const { isMobile, handleToggleCollapse } = useSidebar();
+  const showHeader = isMobile;
 
   return (
     <div className="flex-1 relative h-screen overflow-hidden">
       {showHeader && (
-        <MobileHeader title={title} onBack={handleBackToMaster} />
+        <MobileHeader title={title} onBack={handleToggleCollapse} />
       )}
       {children}
     </div>

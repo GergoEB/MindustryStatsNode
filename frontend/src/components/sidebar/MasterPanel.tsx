@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useParams } from '@tanstack/react-router'
 import ServerGroup from './ServerGroup';
 import FlatServerList from './FlatServerList';
 import SearchBar from "../SearchBar.tsx";
@@ -24,16 +24,18 @@ const MasterPanel: React.FC = () => {
         serverGroups: rawServerGroups,
         expandedGroups,
         toggleGroupExpanded: onToggleGroup,
-        handleServerSelect: onServerSelect,
-        handleNetworkSelect: onNetworkSelect,
-        selectedServer,
-        selectedNetwork,
         loading,
         error,
         lastUpdated,
         isMobile,
     } = useSidebar();
-    const selectedNetworkId = selectedNetwork?.id ?? null;
+    const { networkId } = useParams({ from: '/network/$networkId' });
+    const { serverId } = useParams({ from: '/server/$serverId' });
+
+    // Design decision: NaN is used to indicate no or invalid selection - literally means "not a number"
+    const selectedNetworkId = Number(networkId);
+    const selectedServerId = Number(serverId);
+
     const navigate = useNavigate();
     // Convert grouped data to flat array for the hook
     const rawServers = React.useMemo(() => {
@@ -223,10 +225,9 @@ const MasterPanel: React.FC = () => {
                                                 servers={servers}
                                                 expanded={expandedGroups.has(groupName)}
                                                 onToggleExpand={() => onToggleGroup(groupName)}
-                                                onServerSelect={onServerSelect}
-                                                onNetworkSelect={onNetworkSelect}
-                                                selectedServer={selectedServer}
-                                                isNetworkSelected={isNetworkSelected}
+                                                isSelected={isNetworkSelected}
+                                                networkId={groupId}
+                                                selectedServerId={selectedServerId}
                                             />
                                         );
                                     })
@@ -234,8 +235,7 @@ const MasterPanel: React.FC = () => {
                                     // Flat view
                                     <FlatServerList
                                         servers={flatServers}
-                                        onServerSelect={onServerSelect}
-                                        selectedServer={selectedServer}
+                                        selectedServerId={selectedServerId}
                                     />
                                 )}
                             </div>

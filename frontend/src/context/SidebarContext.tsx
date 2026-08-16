@@ -4,10 +4,9 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import { useNavigate, useRouterState, useParams } from "@tanstack/react-router";
+import { useRouterState } from "@tanstack/react-router";
 import {
-  ServerElement,
-  NetworkDetails,
+  ServerElement
 } from "../../../common/models/serverData";
 import useApi, { FetchStatus } from "../hooks/useApi.ts";
 import { useResponsive } from "../hooks/useResponsive";
@@ -23,12 +22,7 @@ interface SidebarContextValue {
   serverGroups: Record<string, ServerElement[]>;
   expandedGroups: Set<string>;
   toggleGroupExpanded: (groupName: string) => void;
-  handleServerSelect: (server: ServerElement) => void;
-  handleNetworkSelect: (groupId: number, groupName: string) => void;
-  handleBackToMaster: () => void;
   handleToggleCollapse: () => void;
-  selectedServer: ServerElement | null;
-  selectedNetwork: NetworkDetails | null;
   loading: boolean;
   error: boolean;
   lastUpdated: string;
@@ -54,20 +48,19 @@ export const SidebarProvider: React.FC<SidebarProviderProps> = ({
   initialData,
   children,
 }) => {
-  const [serverGroups, setServerGroups] = useState<
-    Record<string, ServerElement[]>
-  >({});
-  const [lastUpdated, setLastUpdated] = useState<string>("Loading...");
-  const [totalServers, setTotalServers] = useState<number>(0);
-  const [onlineServers, setOnlineServers] = useState<number>(0);
-  const [totalPlayers, setTotalPlayers] = useState<number>(0);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<boolean>(false);
-  const [selectedServer, setSelectedServer] = useState<ServerElement | null>(
-    null,
+  const [serverGroups, setServerGroups] = useState<Record<string, ServerElement[]>>(
+    () => buildServerGroups(initialData ?? [])
   );
-  const [selectedNetwork, setSelectedNetwork] =
-    useState<NetworkDetails | null>(null);
+  const [totalServers, setTotalServers] = useState(() => initialData?.length ?? 0);
+  const [onlineServers, setOnlineServers] = useState(
+    () => initialData?.filter((s) => s.online).length ?? 0
+  );
+  const [totalPlayers, setTotalPlayers] = useState(() => computeTotalPlayers(initialData ?? []));
+  const [loading, setLoading] = useState(() => !initialData);
+
+  
+  const [lastUpdated, setLastUpdated] = useState<string>("Loading...");
+  const [error, setError] = useState<boolean>(false);
   const [isMasterPanelCollapsed, setIsMasterPanelCollapsed] =
     useState<boolean>(false);
   const [showMasterPanel, setShowMasterPanel] = useState<boolean>(true);
@@ -76,12 +69,7 @@ export const SidebarProvider: React.FC<SidebarProviderProps> = ({
   );
   const [isHydrated, setIsHydrated] = useState<boolean>(false);
 
-  const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { serverId, networkId } = useParams({ strict: false }) as {
-    serverId?: string;
-    networkId?: string;
-  };
 
   const { connectionStatus, data } = useApi(initialData);
   const { isMobile } = useResponsive();
@@ -108,60 +96,18 @@ export const SidebarProvider: React.FC<SidebarProviderProps> = ({
     setLoading(false);
   }, [data]);
 
-  // Handle URL routing on mount and when data changes
-  useEffect(() => {
-    if (!data) return;
+  const buildServerGroups = (servers: ServerElement[]): Record<string, ServerElement[]> => {
+    const groups: Record<string, ServerElement[]> = {};
+    servers.forEach((server) => {
+      if (!groups[server.name]) groups[server.name] = [];
+      groups[server.name].push(server);
+    });
+    return groups;
+  };
 
-    if (serverId) {
-      const parsedServerId = parseInt(serverId, 10);
-      if (!isNaN(parsedServerId) && parsedServerId > 0) {
-        const targetServer = data.find((s) => s.id === parsedServerId);
-        if (targetServer) {
-          setSelectedServer(targetServer);
-          setSelectedNetwork(null);
-        }
-      }
-    }
-
-    if (networkId) {
-      const parsedNetworkId = parseInt(networkId, 10);
-      if (!isNaN(parsedNetworkId) && parsedNetworkId > 0) {
-        const groupName = Object.keys(serverGroups).find(
-          (name) =>
-            serverGroups[name].length > 0 &&
-            serverGroups[name][0].groupId === parsedNetworkId,
-        );
-        if (groupName) {
-          const servers = serverGroups[groupName];
-          const activeServers = servers.filter((s) => s.online).length;
-          const topServer = servers
-            .filter((s) => s.online && s.currentData)
-            .sort(
-              (a, b) =>
-                (b.currentData?.players || 0) - (a.currentData?.players || 0),
-            )[0];
-
-          setSelectedNetwork({
-            id: parsedNetworkId,
-            name: groupName,
-            playerPeaks: { allTime: 0, daily: 0, weekly: 0 },
-            topServer: topServer
-              ? {
-                  id: topServer.id,
-                  host: topServer.host,
-                  port: topServer.port,
-                  players: topServer.currentData?.players || 0,
-                  name: topServer.name,
-                }
-              : null,
-            activeServers,
-            totalServers: servers.length,
-          });
-          setSelectedServer(null);
-        }
-      }
-    }
-  }, [data, serverId, networkId, serverGroups]);
+  const computeTotalPlayers = (servers: ServerElement[]): number => {
+    return servers.reduce((sum, s) => sum + (isHub(s) ? 0 : s.currentData?.players || 0), 0);
+  };
 
   const processServerData = (servers: ServerElement[] | null) => {
     if (!servers || !Array.isArray(servers)) {
@@ -169,11 +115,7 @@ export const SidebarProvider: React.FC<SidebarProviderProps> = ({
       return;
     }
 
-    const groups: Record<string, ServerElement[]> = {};
-    servers.forEach((server) => {
-      if (!groups[server.name]) groups[server.name] = [];
-      groups[server.name].push(server);
-    });
+    const groups = buildServerGroups(servers);
 
     Object.keys(groups).forEach((groupName) => {
       groups[groupName].sort((a, b) => {
@@ -199,13 +141,7 @@ export const SidebarProvider: React.FC<SidebarProviderProps> = ({
     setServerGroups(Object.fromEntries(sortedGroups));
     setTotalServers(servers.length);
     setOnlineServers(servers.filter((s) => s.online).length);
-    setTotalPlayers(
-      servers.reduce(
-        (sum, server) =>
-          sum + (isHub(server) ? 0 : server.currentData?.players || 0),
-        0,
-      ),
-    );
+    setTotalPlayers(computeTotalPlayers(servers));
   };
 
   const toggleGroupExpanded = (groupName: string) => {
@@ -216,33 +152,6 @@ export const SidebarProvider: React.FC<SidebarProviderProps> = ({
       newExpanded.delete(groupName);
     }
     setExpandedGroups(newExpanded);
-  };
-
-  const handleServerSelect = (server: ServerElement) => {
-    setSelectedServer(server);
-    setSelectedNetwork(null);
-    navigate({ to: `/server/${server.id}` });
-  };
-
-  const handleNetworkSelect = (groupId: number, groupName: string) => {
-    setSelectedNetwork({
-      id: groupId,
-      name: groupName,
-      playerPeaks: { allTime: 0, daily: 0, weekly: 0 },
-      topServer: null,
-      activeServers: 0,
-      totalServers: 0,
-    });
-    setSelectedServer(null);
-    navigate({ to: `/network/${groupId}` });
-  };
-
-  const handleBackToMaster = () => {
-    setShowMasterPanel(true);
-    if (isMobile) {
-      setSelectedServer(null);
-      setSelectedNetwork(null);
-    }
   };
 
   const handleToggleCollapse = () => {
@@ -263,12 +172,7 @@ export const SidebarProvider: React.FC<SidebarProviderProps> = ({
     serverGroups,
     expandedGroups,
     toggleGroupExpanded,
-    handleServerSelect,
-    handleNetworkSelect,
-    handleBackToMaster,
     handleToggleCollapse,
-    selectedServer,
-    selectedNetwork,
     loading,
     error,
     lastUpdated,
