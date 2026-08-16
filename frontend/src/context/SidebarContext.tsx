@@ -74,6 +74,7 @@ export const SidebarProvider: React.FC<SidebarProviderProps> = ({
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
     new Set(),
   );
+  const [isHydrated, setIsHydrated] = useState<boolean>(false);
 
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -85,13 +86,20 @@ export const SidebarProvider: React.FC<SidebarProviderProps> = ({
   const { connectionStatus, data } = useApi(initialData);
   const { isMobile } = useResponsive();
 
-  // On mobile, only the home route ('/') shows the master list.
+  // Mark as hydrated to ensure SSR/client match
   useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
+  // On mobile, only the home route ('/') shows the master list.
+  // Only update after hydration to avoid SSR mismatch
+  useEffect(() => {
+    if (!isHydrated) return;
     if (isMobile) {
       setShowMasterPanel(pathname === "/");
       setIsMasterPanelCollapsed(false);
     }
-  }, [isMobile, pathname]);
+  }, [isMobile, pathname, isHydrated]);
 
   useEffect(() => {
     if (!data) return;
