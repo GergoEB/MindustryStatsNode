@@ -7,44 +7,25 @@ import { formatDate } from "../../util/general.ts";
 import CopyButton from "../CopyButton.tsx";
 import ShareButton from "../ShareButton.tsx";
 import {
+    ServerDetails,
   ServerElement,
 } from "../../../../common/models/serverData.ts";
 import { getModeName } from "../../../../common/Gamemode.ts";
-import { useServerDetails } from "../../hooks/useServerDetails.ts";
 
-const ServerDetail: React.FC<{ server: ServerElement }> = ({ server }) => {
-  const { details, loading, error } = useServerDetails(server.id);
-
-  const serverData = server.currentData;
-  const serverStatus = server.online
+const ServerDetail: React.FC<{ serverDataElement: ServerDetails & ServerElement }> = ({ serverDataElement }) => {
+  const serverData = serverDataElement.currentData;
+  const serverStatus = serverDataElement.online
     ? "Online"
-    : server.lastSeen
-      ? "Offline - Last Seen " + formatDate(server.lastSeen)
+    : serverDataElement.lastSeen
+      ? `Offline - Last Seen ${formatDate(serverDataElement.lastSeen)}`
       : "Offline";
-  const statusClass = server.online
+  const statusClass = serverDataElement.online
     ? "bg-green-500/20 text-green-400 border-green-500/30"
     : "bg-red-500/20 text-red-400 border-red-500/30";
 
   const formatUptime = (percentage: number) => {
     return `${percentage.toFixed(1)}%`;
   };
-
-  if (loading) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-orange-400 border-t-transparent"></div>
-      </div>
-    );
-  }
-
-  if (error || !details) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <p className="text-red-400">Failed to load server details.</p>
-        {error && <p className="text-red-300">{error.message}</p>}
-      </div>
-    );
-  }
 
   return (
     <div className="h-full overflow-y-auto p-3 sm:p-6">
@@ -69,7 +50,7 @@ const ServerDetail: React.FC<{ server: ServerElement }> = ({ server }) => {
                 >
                   {serverStatus}
                 </span>
-                {server.online && serverData && (
+                {serverDataElement.online && serverData && (
                   <>
                     <span className="text-xs sm:text-sm text-gray-400">
                       {serverData.players}/{serverData.playerLimit} players
@@ -83,17 +64,17 @@ const ServerDetail: React.FC<{ server: ServerElement }> = ({ server }) => {
               {/* Action buttons - stacked on mobile */}
               <div className="flex flex-wrap gap-2 mt-3">
                 <CopyButton
-                  text={`${server.host}:${server.port}`}
+                  text={`${serverDataElement.host}:${serverDataElement.port}`}
                   className="bg-neutral-700/50 hover:bg-neutral-600/50 text-gray-300 text-xs sm:text-sm px-2 sm:px-3 py-1 rounded transition-colors border border-neutral-600/50"
                 />
                 <ShareButton
-                  serverId={server.id}
+                  serverId={serverDataElement.id}
                   className="bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 text-xs sm:text-sm px-2 sm:px-3 py-1 rounded transition-colors border border-orange-500/30"
                 />
               </div>
             </div>
 
-            {server.online && serverData && (
+            {serverDataElement.online && serverData && (
               <div className="text-left sm:text-right shrink-0">
                 <div className="text-3xl sm:text-4xl font-bold text-orange-400 drop-shadow-[0_0_10px_rgba(249,115,22,0.3)]">
                   {String(serverData.players)}
@@ -146,13 +127,13 @@ const ServerDetail: React.FC<{ server: ServerElement }> = ({ server }) => {
             <div className="grid grid-cols-3 gap-2 sm:gap-3">
               <div className="text-center">
                 <div className="text-xl sm:text-2xl font-bold text-orange-400 drop-shadow-[0_0_5px_rgba(249,115,22,0.3)]">
-                  {details.playerPeaks.daily}
+                  {serverDataElement?.playerPeaks?.daily ?? "-"}
                 </div>
                 <div className="text-xs sm:text-sm text-gray-400">Today</div>
               </div>
               <div className="text-center">
                 <div className="text-xl sm:text-2xl font-bold text-orange-400 drop-shadow-[0_0_5px_rgba(249,115,22,0.3)]">
-                  {details.playerPeaks.weekly}
+                  {serverDataElement?.playerPeaks?.weekly ?? "-"}
                 </div>
                 <div className="text-xs sm:text-sm text-gray-400">
                   This Week
@@ -160,7 +141,7 @@ const ServerDetail: React.FC<{ server: ServerElement }> = ({ server }) => {
               </div>
               <div className="text-center">
                 <div className="text-xl sm:text-2xl font-bold text-orange-400 drop-shadow-[0_0_5px_rgba(249,115,22,0.3)]">
-                  {details.playerPeaks.allTime}
+                  {serverDataElement?.playerPeaks?.allTime ?? "-"}
                 </div>
                 <div className="text-xs sm:text-sm text-gray-400">All Time</div>
               </div>
@@ -174,13 +155,13 @@ const ServerDetail: React.FC<{ server: ServerElement }> = ({ server }) => {
             <div className="grid grid-cols-2 gap-2 sm:gap-3">
               <div className="text-center">
                 <div className="text-xl sm:text-2xl font-bold text-green-400">
-                  {formatUptime(details.uptime.last24h)}
+                  {serverDataElement?.uptime?.last24h !== undefined ? formatUptime(serverDataElement.uptime.last24h) : "-"}
                 </div>
                 <div className="text-xs sm:text-sm text-gray-400">Last 24h</div>
               </div>
               <div className="text-center">
                 <div className="text-xl sm:text-2xl font-bold text-green-400">
-                  {formatUptime(details.uptime.last7d)}
+                  {serverDataElement?.uptime?.last7d !== undefined ? formatUptime(serverDataElement.uptime.last7d) : "-"}
                 </div>
                 <div className="text-xs sm:text-sm text-gray-400">
                   Last 7 Days
@@ -196,7 +177,7 @@ const ServerDetail: React.FC<{ server: ServerElement }> = ({ server }) => {
             Player History
           </h2>
           <div className="h-64 sm:h-96">
-            <ServerHistoryChart {...server} />
+            <ServerHistoryChart {...serverDataElement} />
           </div>
         </div>
 
@@ -205,7 +186,7 @@ const ServerDetail: React.FC<{ server: ServerElement }> = ({ server }) => {
           <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">
             Map History
           </h2>
-          <MapHistoryTable mapHistory={details.allMaps} />
+          <MapHistoryTable mapHistory={serverDataElement?.allMaps ?? []} />
         </div>
 
         {/* MOTD History Table */}
@@ -213,7 +194,7 @@ const ServerDetail: React.FC<{ server: ServerElement }> = ({ server }) => {
           <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">
             MOTD History
           </h2>
-          <MotdHistoryTable motdHistory={details.allMotds} />
+          <MotdHistoryTable motdHistory={serverDataElement?.allMotds ?? []} />
         </div>
       </div>
     </div>
