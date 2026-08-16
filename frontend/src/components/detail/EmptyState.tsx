@@ -18,7 +18,8 @@ export const EmptyState: React.FC<{
   title: string;
   message: string;
   isError?: boolean;
-}> = ({ title, message, isError }) => (
+  error?: string;
+}> = ({ title, message, isError, error }) => (
   <div className="h-full flex items-center justify-center">
     <div className="text-center">
       <div className="w-16 h-16 bg-neutral-700/50 rounded-full flex items-center justify-center mb-4 mx-auto">
@@ -26,6 +27,7 @@ export const EmptyState: React.FC<{
       </div>
       <h3 className="text-xl font-semibold text-gray-300 mb-2">{title}</h3>
       <p className={isError ? "text-red-400" : "text-gray-400"}>{message}</p>
+      {error && <p className="text-red-400">{error}</p>}
     </div>
   </div>
 );
