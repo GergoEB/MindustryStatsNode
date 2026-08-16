@@ -48,17 +48,6 @@ export const SidebarProvider: React.FC<SidebarProviderProps> = ({
   initialData,
   children,
 }) => {
-  const [serverGroups, setServerGroups] = useState<Record<string, ServerElement[]>>(
-    () => buildServerGroups(initialData ?? [])
-  );
-  const [totalServers, setTotalServers] = useState(() => initialData?.length ?? 0);
-  const [onlineServers, setOnlineServers] = useState(
-    () => initialData?.filter((s) => s.online).length ?? 0
-  );
-  const [totalPlayers, setTotalPlayers] = useState(() => computeTotalPlayers(initialData ?? []));
-  const [loading, setLoading] = useState(() => !initialData);
-
-  
   const [lastUpdated, setLastUpdated] = useState<string>("Loading...");
   const [error, setError] = useState<boolean>(false);
   const [isMasterPanelCollapsed, setIsMasterPanelCollapsed] =
@@ -161,6 +150,16 @@ export const SidebarProvider: React.FC<SidebarProviderProps> = ({
       setIsMasterPanelCollapsed(!isMasterPanelCollapsed);
     }
   };
+
+  const [serverGroups, setServerGroups] = useState<Record<string, ServerElement[]>>(
+    () => buildServerGroups(initialData ?? [])
+  );
+  const [totalServers, setTotalServers] = useState(() => initialData?.length ?? 0);
+  const [onlineServers, setOnlineServers] = useState(
+    () => initialData?.filter((s) => s.online).length ?? 0
+  );
+  const [totalPlayers, setTotalPlayers] = useState(() => computeTotalPlayers(initialData ?? []));
+  const [loading, setLoading] = useState(() => !initialData);
 
   const value: SidebarContextValue = {
     isMasterPanelCollapsed,
