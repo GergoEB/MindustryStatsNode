@@ -2,19 +2,20 @@ import React from 'react';
 import {formatUnsafeText, removeColors} from "../../util/mindustry.ts";
 import {countryCodeToFlag} from "../../util/general.ts";
 import { ServerElement } from '../../../../common/models/serverData.ts';
+import { useNavigate } from '@tanstack/react-router';
 
 const ServerItem: React.FC<{
-    server: ServerElement;
-    onSelect: (server: ServerElement) => void;
-    isSelected: boolean;
-}> = ({ server, onSelect, isSelected }) => {
+  server: ServerElement;
+  isSelected: boolean;
+}> = ({ server, isSelected }) => {
     const serverData = server.currentData;
     //const serverStatus = server.online ? 'Online' : server.lastSeen ? 'Offline - Last Seen ' + formatDate(server.lastSeen) : 'Offline';
     const statusClass = server.online
         ? 'bg-green-500/20 text-green-400 border-green-500/30'
         : 'bg-red-500/20 text-red-400 border-red-500/30';
     
-    const flagEmoji = countryCodeToFlag(server.countryCode);
+  const flagEmoji = countryCodeToFlag(server.countryCode);
+  const navigate = useNavigate();
 
     return (
         <div
@@ -23,7 +24,7 @@ const ServerItem: React.FC<{
                     ? 'bg-orange-500/20 border-l-4 border-l-orange-400'
                     : 'hover:bg-neutral-700/30'
             }`}
-            onClick={() => onSelect(server)}
+            onClick={() => navigate({ to: `/server/${server.id}` })}
         >
             <div className="flex flex-col flex-1 min-w-0 mr-4">
                 {serverData?.serverName && (
