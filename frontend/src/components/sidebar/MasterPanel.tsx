@@ -29,13 +29,15 @@ const MasterPanel: React.FC = () => {
     lastUpdated,
     isMobile,
   } = useSidebar();
-  const { networkId, serverId } = useParams({ strict: false })
+  
+  const { networkId, serverId } = useParams({ strict: false });
 
   // Design decision: NaN is used to indicate no or invalid selection - literally means "not a number"
   const selectedNetworkId = Number(networkId);
   const selectedServerId = Number(serverId);
 
   const navigate = useNavigate();
+
   // Convert grouped data to flat array for the hook
   const rawServers = React.useMemo(() => {
     return Object.values(rawServerGroups).flat();
@@ -58,20 +60,18 @@ const MasterPanel: React.FC = () => {
 
   const connectionStatusInfo = getConnectionStatusClasses(connectionStatus);
 
-  return (
-    <div
-      className={`relative transition-all duration-300 ${
-        isCollapsed ? "w-16" : isMobile ? "w-full" : "w-3/12"
-      } min-w-0 bg-neutral-900 backdrop-blur-md border-r border-neutral-800/50 flex flex-col h-screen`}
-    >
-      {/* Header - Improved design with connection status */}
-      <div className="bg-linear-to-r from-neutral-900/60 to-neutral-900/40 backdrop-blur-md border-b border-neutral-900/50 p-3 sm:p-4 flex items-center justify-between shrink-0">
-        {!isCollapsed && (
-          <div className="flex items-center gap-3">
-            {/* Logo/Icon */}
-            <div className="w-10 h-10 bg-linear-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center shadow-lg shadow-orange-500/20">
+  // --- COLLAPSED VIEW PATH ---
+  if (isCollapsed) {
+    return (
+      <div className="relative transition-all duration-300 w-16 bg-neutral-900 backdrop-blur-md border-r border-neutral-800/50 flex flex-col h-screen min-h-screen">
+        <div className="bg-linear-to-r from-neutral-900/60 to-neutral-900/40 backdrop-blur-md border-b border-neutral-900/50 p-3 sm:p-4 flex items-center justify-center shrink-0">
+          {!isMobile && (
+            <button
+              onClick={onToggleCollapse}
+              className="bg-neutral-810/50 hover:bg-orange-700/10 hover:border-orange-500/40 text-orange-500 p-2 rounded-lg transition-colors border border-neutral-600/50"
+            >
               <svg
-                className="w-6 h-6 text-white"
+                className="w-4 h-4 transform transition-transform rotate-180"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -80,38 +80,70 @@ const MasterPanel: React.FC = () => {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth="2"
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                  d="M15 19l-7-7 7-7"
                 />
               </svg>
-            </div>
-            {/* Title and status */}
-            <div className="flex flex-col">
-              <h1 className="text-lg sm:text-xl font-bold text-white">
-                Mindustry <span className="text-orange-400">Tracker</span>
-              </h1>
-              <div className="flex items-center gap-1.5">
-                <Tooltip
-                  content={connectionStatusInfo.tooltip}
-                  position="bottom"
-                  delay={100}
-                >
-                  <span
-                    className={`inline-block w-2 h-2 rounded-full ${connectionStatusInfo.dotColor}`}
-                  ></span>
-                </Tooltip>
-                <span className="text-xs text-gray-400">{VERSION}</span>
-              </div>
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // --- EXPANDED VIEW PATH ---
+  return (
+    <div
+      className={`relative transition-all duration-300 ${
+        isMobile ? "w-full" : "w-3/12"
+      } bg-neutral-900 backdrop-blur-md border-r border-neutral-800/50 flex flex-col h-screen min-h-screen`}
+    >
+      {/* Header */}
+      <div className="bg-linear-to-r from-neutral-900/60 to-neutral-900/40 backdrop-blur-md border-b border-neutral-900/50 p-3 sm:p-4 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-3">
+          {/* Logo/Icon */}
+          <div className="w-10 h-10 bg-linear-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center shadow-lg shadow-orange-500/20">
+            <svg
+              className="w-6 h-6 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+              />
+            </svg>
+          </div>
+          {/* Title and status */}
+          <div className="flex flex-col">
+            <h1 className="text-lg sm:text-xl font-bold text-white">
+              Mindustry <span className="text-orange-400">Tracker</span>
+            </h1>
+            <div className="flex items-center gap-1.5">
+              <Tooltip
+                content={connectionStatusInfo.tooltip}
+                position="bottom"
+                delay={100}
+              >
+                <span
+                  className={`inline-block w-2 h-2 rounded-full ${connectionStatusInfo.dotColor}`}
+                ></span>
+              </Tooltip>
+              <span className="text-xs text-gray-400">{VERSION}</span>
             </div>
           </div>
-        )}
-        {/* Only show collapse button on desktop */}
+        </div>
+
+        {/* Toggle Collapse Button */}
         {!isMobile && (
           <button
             onClick={onToggleCollapse}
             className="bg-neutral-810/50 hover:bg-orange-700/10 hover:border-orange-500/40 text-orange-500 p-2 rounded-lg transition-colors border border-neutral-600/50"
           >
             <svg
-              className={`w-4 h-4 transform transition-transform ${isCollapsed ? "rotate-180" : ""}`}
+              className="w-4 h-4 transform transition-transform"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -127,189 +159,183 @@ const MasterPanel: React.FC = () => {
         )}
       </div>
 
-      {!isCollapsed && (
-        <>
-          {/* Stats */}
-          <div className="p-4 border-neutral-800/50 shrink-0">
-            <div className="grid grid-cols-2 gap-2 text-center">
-              <div className="bg-neutral-800 backdrop-blur-md border border-neutral-800/50 p-2 rounded-lg">
-                <div className="text-gray-300 text-xs">
-                  Online / Total Servers
-                </div>
-                <div className="flex items-center justify-center space-x-2">
-                  <span className="text-lg font-bold text-green-400">
-                    {onlineServers}
-                  </span>
-                  <span className="text-lg font-bold text-gray-300"> / </span>
-                  <span className="text-lg font-bold text-white">
-                    {totalServers}
-                  </span>
-                </div>
-              </div>
-              <div
-                className="bg-neutral-800 backdrop-blur-md border border-neutral-800/50 p-2 rounded-lg cursor-pointer hover:bg-orange-700/10 hover:border-orange-500/40 transition-all group"
-                onClick={() => navigate({ to: GlobalRoute.to })}
-              >
-                <div className="text-gray-300 text-xs flex group-hover:text-orange-400 items-center justify-center gap-1">
-                  Total Players
-                  <Tooltip
-                    content="View global player history"
-                    position="top"
-                    delay={200}
-                  >
-                    <svg
-                      className="w-3.5 h-3.5 text-gray-300 group-hover:text-orange-400 transition-colors"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                      />
-                    </svg>
-                  </Tooltip>
-                </div>
-                <div className="text-lg font-bold text-orange-400 drop-shadow-[0_0_10px_rgba(249,115,22,0.3)]">
-                  {totalPlayers}
-                </div>
-              </div>
+      {/* Stats */}
+      <div className="p-4 border-neutral-800/50 shrink-0">
+        <div className="grid grid-cols-2 gap-2 text-center">
+          <div className="bg-neutral-800 backdrop-blur-md border border-neutral-800/50 p-2 rounded-lg">
+            <div className="text-gray-300 text-xs">
+              Online / Total Servers
+            </div>
+            <div className="flex items-center justify-center space-x-2">
+              <span className="text-lg font-bold text-green-400">
+                {onlineServers}
+              </span>
+              <span className="text-lg font-bold text-gray-300"> / </span>
+              <span className="text-lg font-bold text-white">
+                {totalServers}
+              </span>
             </div>
           </div>
-
-          {/* Inactive Servers Button */}
-          <div className="px-4 pb-3 border-b border-neutral-800/50 shrink-0">
-            <button
-              onClick={() => navigate({ to: InactiveRoute.to })}
-              className="w-full bg-neutral-800 hover:bg-orange-700/10 hover:border-orange-500/40 text-gray-300 hover:text-white px-4 py-2 rounded-lg transition-colors border border-neutral-800/50 text-sm font-medium"
-            >
-              Server List Statistics
-            </button>
-          </div>
-
-          {/* Controls */}
-          <div className="p-4 border-b border-neutral-900/50 shrink-0">
-            {/* Search Bar */}
-            <div className="mb-3">
-              <SearchBar
-                onSearchValueChange={setSearchTerm}
-                value={searchTerm}
-              />
-            </div>
-
-            {/* Control Buttons */}
-            <div className="flex flex-wrap gap-2 mb-3">
+          <div
+            className="bg-neutral-800 backdrop-blur-md border border-neutral-800/50 p-2 rounded-lg cursor-pointer hover:bg-orange-700/10 hover:border-orange-500/40 transition-all group"
+            onClick={() => navigate({ to: GlobalRoute.to })}
+          >
+            <div className="text-gray-300 text-xs flex group-hover:text-orange-400 items-center justify-center gap-1">
+              Total Players
               <Tooltip
-                content={
-                  isGrouped
-                    ? "Switch to flat list view showing all servers"
-                    : "Group servers by their cluster names"
-                }
+                content="View global player history"
                 position="top"
-                delay={300}
-                className="flex-1 min-w-0"
+                delay={200}
               >
-                <ToggleButton
-                  isActive={isGrouped}
-                  onClick={toggleGrouping}
-                  activeText="Ungroup"
-                  inactiveText="Group"
-                  className="w-full"
-                />
-              </Tooltip>
-
-              <Tooltip
-                content={
-                  hideInactiveEnabled
-                    ? "Show all servers including inactive ones"
-                    : "Hide servers that have been offline for more than 7 days"
-                }
-                position="top"
-                delay={300}
-                className="flex-1 min-w-0"
-              >
-                <ToggleButton
-                  isActive={hideInactiveEnabled}
-                  onClick={toggleHideInactive}
-                  activeText="Show All"
-                  inactiveText="Hide Inactive"
-                  activeColor="bg-orange-500/20 hover:bg-orange-500/40 text-orange-400 border-orange-500/40"
-                  inactiveColor="bg-neutral-600/20 hover:bg-neutral-600/40 text-neutral-400 border-neutral-600/40"
-                  className="w-full"
-                />
-              </Tooltip>
-
-              {/* Sort Dropdown */}
-              <SortDropdown
-                sortOptions={sortOptions}
-                currentCriteria={sortCriteria}
-                currentDirection={sortDirection}
-                onSortChange={handleSortChange}
-              />
-            </div>
-          </div>
-
-          {/* Server List */}
-          <div className="flex-1 overflow-y-auto p-4 min-h-0">
-            {loading && (
-              <div className="text-center p-8 bg-neutral-800 backdrop-blur-md border border-neutral-800/50 rounded-xl mb-6">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-orange-400 border-t-transparent"></div>
-                <p className="mt-4 text-gray-300">Loading server data...</p>
-              </div>
-            )}
-
-            {error && (
-              <div className="bg-red-500/20 border border-red-500 text-red-400 px-6 py-4 rounded-xl backdrop-blur-sm mb-6">
-                <span className="block sm:inline">
-                  Failed to load server data. Please try again later.
-                </span>
-              </div>
-            )}
-
-            {!loading && !error && (
-              <div className="space-y-4">
-                {isGrouped ? (
-                  // Grouped view
-                  Object.entries(processedServerGroups).map(
-                    ([groupName, servers]) => {
-                      const groupId =
-                        servers.length > 0 ? servers[0].groupId : 0;
-                      const isNetworkSelected = selectedNetworkId === groupId;
-                      return (
-                        <ServerGroup
-                          key={groupName}
-                          name={groupName}
-                          servers={servers}
-                          expanded={expandedGroups.has(groupName)}
-                          onToggleExpand={() => onToggleGroup(groupName)}
-                          isSelected={isNetworkSelected}
-                          networkId={groupId}
-                          selectedServerId={selectedServerId}
-                        />
-                      );
-                    },
-                  )
-                ) : (
-                  // Flat view
-                  <FlatServerList
-                    servers={flatServers}
-                    selectedServerId={selectedServerId}
+                <svg
+                  className="w-3.5 h-3.5 text-gray-300 group-hover:text-orange-400 transition-colors"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
                   />
-                )}
-              </div>
+                </svg>
+              </Tooltip>
+            </div>
+            <div className="text-lg font-bold text-orange-400 drop-shadow-[0_0_10px_rgba(249,115,22,0.3)]">
+              {totalPlayers}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Inactive Servers Button */}
+      <div className="px-4 pb-3 border-b border-neutral-800/50 shrink-0">
+        <button
+          onClick={() => navigate({ to: InactiveRoute.to })}
+          className="w-full bg-neutral-800 hover:bg-orange-700/10 hover:border-orange-500/40 text-gray-300 hover:text-white px-4 py-2 rounded-lg transition-colors border border-neutral-800/50 text-sm font-medium"
+        >
+          Server List Statistics
+        </button>
+      </div>
+
+      {/* Controls */}
+      <div className="p-4 border-b border-neutral-900/50 shrink-0">
+        {/* Search Bar */}
+        <div className="mb-3">
+          <SearchBar
+            onSearchValueChange={setSearchTerm}
+            value={searchTerm}
+          />
+        </div>
+
+        {/* Control Buttons */}
+        <div className="flex flex-wrap gap-2 mb-3">
+          <Tooltip
+            content={
+              isGrouped
+                ? "Switch to flat list view showing all servers"
+                : "Group servers by their cluster names"
+            }
+            position="top"
+            delay={300}
+            className="flex-1 min-w-0"
+          >
+            <ToggleButton
+              isActive={isGrouped}
+              onClick={toggleGrouping}
+              activeText="Ungroup"
+              inactiveText="Group"
+              className="w-full"
+            />
+          </Tooltip>
+
+          <Tooltip
+            content={
+              hideInactiveEnabled
+                ? "Show all servers including inactive ones"
+                : "Hide servers that have been offline for more than 7 days"
+            }
+            position="top"
+            delay={300}
+            className="flex-1 min-w-0"
+          >
+            <ToggleButton
+              isActive={hideInactiveEnabled}
+              onClick={toggleHideInactive}
+              activeText="Show All"
+              inactiveText="Hide Inactive"
+              activeColor="bg-orange-500/20 hover:bg-orange-500/40 text-orange-400 border-orange-500/40"
+              inactiveColor="bg-neutral-600/20 hover:bg-neutral-600/40 text-neutral-400 border-neutral-600/40"
+              className="w-full"
+            />
+          </Tooltip>
+
+          {/* Sort Dropdown */}
+          <SortDropdown
+            sortOptions={sortOptions}
+            currentCriteria={sortCriteria}
+            currentDirection={sortDirection}
+            onSortChange={handleSortChange}
+          />
+        </div>
+      </div>
+
+      {/* Server List */}
+      <div className="flex-1 overflow-y-auto p-4 min-h-0">
+        {loading && (
+          <div className="text-center p-8 bg-neutral-800 backdrop-blur-md border border-neutral-800/50 rounded-xl mb-6">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-orange-400 border-t-transparent"></div>
+            <p className="mt-4 text-gray-300">Loading server data...</p>
+          </div>
+        )}
+
+        {error && (
+          <div className="bg-red-500/20 border border-red-500 text-red-400 px-6 py-4 rounded-xl backdrop-blur-sm mb-6">
+            <span className="block sm:inline">
+              Failed to load server data. Please try again later.
+            </span>
+          </div>
+        )}
+
+        {!loading && !error && (
+          <div className="space-y-4">
+            {isGrouped ? (
+              Object.entries(processedServerGroups).map(
+                ([groupName, servers]) => {
+                  const groupId =
+                    servers.length > 0 ? servers[0].groupId : 0;
+                  const isNetworkSelected = selectedNetworkId === groupId;
+                  return (
+                    <ServerGroup
+                      key={groupName}
+                      name={groupName}
+                      servers={servers}
+                      expanded={expandedGroups.has(groupName)}
+                      onToggleExpand={() => onToggleGroup(groupName)}
+                      isSelected={isNetworkSelected}
+                      networkId={groupId}
+                      selectedServerId={selectedServerId}
+                    />
+                  );
+                }
+              )
+            ) : (
+              <FlatServerList
+                servers={flatServers}
+                selectedServerId={selectedServerId}
+              />
             )}
           </div>
+        )}
+      </div>
 
-          {/* Footer */}
-          <div className="p-4 border-t border-neutral-800/50 shrink-0">
-            <p className="text-xs text-gray-500">
-              Last updated: {lastUpdated} | Commit: {COMMIT}
-            </p>
-          </div>
-        </>
-      )}
+      {/* Footer */}
+      <div className="p-4 border-t border-neutral-800/50 shrink-0">
+        <p className="text-xs text-gray-500">
+          Last updated: {lastUpdated} | Commit: {COMMIT}
+        </p>
+      </div>
     </div>
   );
 };

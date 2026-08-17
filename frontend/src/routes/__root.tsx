@@ -44,12 +44,12 @@ function RootLayout() {
   return (
     <div className="h-screen bg-linear-to-br from-stone-900 via-neutral-900 to-stone-900 text-white flex overflow-hidden">
       <AnimatedBackground />
-      <div className={isMobile && !showMasterPanel ? "hidden" : ""}>
-        <MasterPanel />
-      </div>
-      <div className={isMobile && showMasterPanel ? "hidden" : ""}>
-        <Outlet />
-      </div>
+      {(!isMobile || showMasterPanel) && <MasterPanel />}
+      {(!isMobile || !showMasterPanel) && (
+        <div className="flex-1" style={{ minWidth: 0 }}>
+          <Outlet />
+        </div>
+      )}
     </div>
   );
 }
