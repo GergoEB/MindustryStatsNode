@@ -29,7 +29,7 @@ const MasterPanel: React.FC = () => {
     lastUpdated,
     isMobile,
   } = useSidebar();
-  
+
   const { networkId, serverId } = useParams({ strict: false });
 
   // Design decision: NaN is used to indicate no or invalid selection - literally means "not a number"
@@ -95,7 +95,7 @@ const MasterPanel: React.FC = () => {
     <div
       className={`relative transition-all duration-300 ${
         isMobile ? "w-full" : "w-3/12"
-      } bg-neutral-900 backdrop-blur-md border-r border-neutral-800/50 flex flex-col h-screen min-h-screen`}
+      } bg-neutral-900 backdrop-blur-md border-r border-neutral-800/50 flex flex-col h-screen min-h-screen min-w-sm`}
     >
       {/* Header */}
       <div className="bg-linear-to-r from-neutral-900/60 to-neutral-900/40 backdrop-blur-md border-b border-neutral-900/50 p-3 sm:p-4 flex items-center justify-between shrink-0">
@@ -178,7 +178,7 @@ const MasterPanel: React.FC = () => {
           </div>
           <div
             className="bg-neutral-800 backdrop-blur-md border border-neutral-800/50 p-2 rounded-lg cursor-pointer hover:bg-orange-700/10 hover:border-orange-500/40 transition-all group"
-            onClick={() => navigate({ to: GlobalRoute.to })}
+            onClick={() => { console.log("click click");  navigate({ to: GlobalRoute.to })}}
           >
             <div className="text-gray-300 text-xs flex group-hover:text-orange-400 items-center justify-center gap-1">
               Total Players

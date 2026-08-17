@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
-import viteReact from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
+import viteReact from '@vitejs/plugin-react';
 
 export default defineConfig({
   server: {
@@ -12,12 +12,15 @@ export default defineConfig({
         target: 'http://localhost:3000',
         changeOrigin: true,
       },
+      '/config': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
     },
   },
   plugins: [
     tailwindcss(),
-    tanstackStart({
-    }),
+    tanstackStart({}),
     viteReact(),
   ]
 });
