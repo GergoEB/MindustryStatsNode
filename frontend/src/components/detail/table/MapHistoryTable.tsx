@@ -80,7 +80,7 @@ const MapHistoryTable: React.FC<{ mapHistory: ServerMapData[] }> = ({
         <>
           <div className="overflow-x-auto card-base shadow-lg -mx-1 px-1">
             <table className="w-full divide-y divide-subtle">
-              <thead className="bg-surface-secondary">
+              <thead className="bg-surface-secondary border-default">
                 <tr>
                   <th
                     scope="col"
@@ -106,7 +106,7 @@ const MapHistoryTable: React.FC<{ mapHistory: ServerMapData[] }> = ({
                 {paginatedHistory.map((item, index) => (
                   <tr
                     key={item.id || index}
-                    className="hover:bg-accent-muted transition-colors"
+                    className="hover:bg-accent-muted transition-colors border-default"
                   >
                     <td
                       className={`px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium ${
