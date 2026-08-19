@@ -66,16 +66,6 @@ const MotdHistoryTable: React.FC<{ motdHistory: ServerMotdData[] }> = ({
     );
   };
 
-  const hasModeNameChanged = (
-    currentItem: ServerMotdData,
-    index: number,
-  ): boolean => {
-    const globalIndex = (currentPage - 1) * ITEMS_PER_PAGE + index;
-    if (globalIndex === 0) return false;
-    const previousItem = filteredHistory[globalIndex - 1];
-    return previousItem && currentItem.modeName !== previousItem.modeName;
-  };
-
   React.useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm]);
