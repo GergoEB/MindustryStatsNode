@@ -22,17 +22,18 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearchValueChange, value }) => 
                 onChange={handleChange}
                 placeholder="Search servers..."
                 className="
-                    w-full px-3 py-1 rounded-lg
-                    border border-neutral-600/30
-                    bg-neutral-800/40
-                    text-gray-300 text-xs backdrop-blur-sm
-                    focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500/30
-                    hover:bg-orange-700/10 hover:border-orange-500/30"
+                    w-full px-3 py-1 rounded
+                    border border-default
+                    bg-surface-secondary
+                    text-secondary text-xs backdrop-blur-sm
+                    focus:outline-none focus:border-accent
+                    hover:bg-accent-hover hover:border-accent
+                    transition-colors"
             />
             {value && (
                 <button
                     onClick={handleClear}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 text-xs"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-tertiary hover:text-primary text-xs"
                     aria-label="Clear"
                     tabIndex={0}
                 >

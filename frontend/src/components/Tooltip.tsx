@@ -49,10 +49,10 @@ const Tooltip: React.FC<TooltipProps> = ({
   }, []);
 
   const getPositionClasses = () => {
-    const baseClasses = 'absolute z-50 px-2 py-1 text-xs rounded-lg pointer-events-none w-max max-w-full';
-    const backgroundClasses = 'bg-neutral-900/95 backdrop-blur-md border border-neutral-600/50 text-gray-200 shadow-xl';
+    const baseClasses = 'absolute z-50 px-2 py-1 text-xs rounded-[var(--radius-DEFAULT)] pointer-events-none w-max max-w-full';
+    const backgroundClasses = 'bg-surface-tertiary backdrop-blur-md border border-subtle text-primary shadow-xl';
     const transitionClasses = `transition-all duration-150 ${showTooltip ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`;
-
+    
     switch (position) {
       case 'top':
         return `${baseClasses} ${backgroundClasses} ${transitionClasses} bottom-full left-1/2 transform -translate-x-1/2 mb-2`;
@@ -68,7 +68,7 @@ const Tooltip: React.FC<TooltipProps> = ({
   };
 
   const getArrowClasses = () => {
-    const baseArrow = 'absolute w-2 h-2 bg-neutral-900/95 border border-neutral-600/50 transform rotate-45';
+    const baseArrow = 'absolute w-2 h-2 bg-surface-tertiary border border-subtle transform rotate-45';
 
     switch (position) {
       case 'top':

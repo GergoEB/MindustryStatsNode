@@ -34,7 +34,7 @@ const SortDropdown: React.FC<SortDropdownProps> = ({
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="hover:bg-orange-700/10 hover:border-orange-500/30 text-gray-300 border border-neutral-600/30 bg-neutral-800/50 px-3 py-1 rounded-lg text-xs transition-colors flex items-center space-x-2 min-w-0"
+        className="button-secondary px-3 py-1 text-xs flex items-center space-x-2 min-w-0"
       >
         <span className="truncate">
           Sort: {currentOption?.label}
@@ -42,7 +42,7 @@ const SortDropdown: React.FC<SortDropdownProps> = ({
         <div className="flex items-center space-x-1">
           <svg
             className={`w-3 h-3 transition-colors ${
-              currentDirection === 'asc' ? 'text-orange-400' : 'text-gray-500'
+              currentDirection === 'asc' ? 'text-accent' : 'text-tertiary'
             }`}
             fill="none"
             stroke="currentColor"
@@ -52,7 +52,7 @@ const SortDropdown: React.FC<SortDropdownProps> = ({
           </svg>
           <svg
             className={`w-3 h-3 transition-colors ${
-              currentDirection === 'desc' ? 'text-orange-400' : 'text-gray-500'
+              currentDirection === 'desc' ? 'text-accent' : 'text-tertiary'
             }`}
             fill="none"
             stroke="currentColor"
@@ -64,11 +64,11 @@ const SortDropdown: React.FC<SortDropdownProps> = ({
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1 w-48 bg-neutral-800 border-neutral-800/40 backdrop-blur-md border rounded-lg shadow-xl z-50">
+        <div className="absolute top-full left-0 mt-1 w-48 bg-surface-secondary border-default backdrop-blur-md border rounded-[var(--radius-DEFAULT)] shadow-xl z-50">
           {sortOptions.map((option) => (
-            <div key={option.key} className="border-b border-neutral-800/50 last:border-b-0">
+            <div key={option.key} className="border-b border-subtle last:border-b-0">
               <div
-                className="px-3 py-2 hover:bg-neutral-700/50 cursor-pointer transition-colors"
+                className="px-3 py-2 hover:bg-accent-hover cursor-pointer transition-colors"
                 onClick={() => {
                   onSortChange(option.key);
                   setIsOpen(true);
@@ -76,13 +76,13 @@ const SortDropdown: React.FC<SortDropdownProps> = ({
               >
                 <div className="flex justify-between items-center">
                   <span className={`text-sm ${
-                    option.key === currentCriteria ? 'text-orange-400 font-medium' : 'text-gray-300'
+                    option.key === currentCriteria ? 'text-accent font-medium' : 'text-secondary'
                   }`}>
                     {option.label}
                   </span>
                   {option.key === currentCriteria && (
                     <svg
-                      className={`w-4 h-4 text-orange-400 transform ${
+                      className={`w-4 h-4 text-accent transform ${
                         currentDirection === 'desc' ? 'rotate-180' : ''
                       }`}
                       fill="none"
@@ -98,10 +98,10 @@ const SortDropdown: React.FC<SortDropdownProps> = ({
                 <div className="px-3 pb-2">
                   <div className="flex space-x-2">
                     <button
-                      className={`text-xs px-2 py-1 rounded ${
+                      className={`text-xs px-2 py-1 rounded-[var(--radius-DEFAULT)] ${
                         currentDirection === 'asc'
-                          ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30'
-                          : 'bg-neutral-700/50 text-gray-400 hover:bg-neutral-600/50'
+                          ? 'button-accent'
+                          : 'bg-surface-primary text-secondary hover:bg-accent-hover'
                       } transition-colors`}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -112,10 +112,10 @@ const SortDropdown: React.FC<SortDropdownProps> = ({
                       Ascending
                     </button>
                     <button
-                      className={`text-xs px-2 py-1 rounded ${
+                      className={`text-xs px-2 py-1 rounded-[var(--radius-DEFAULT)] ${
                         currentDirection === 'desc'
-                          ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30'
-                          : 'bg-neutral-700/50 text-gray-400 hover:bg-neutral-600/50'
+                          ? 'button-accent'
+                          : 'bg-surface-primary text-secondary hover:bg-accent-hover'
                       } transition-colors`}
                       onClick={(e) => {
                         e.stopPropagation();
