@@ -147,3 +147,25 @@ body {
     @apply bg-accent-muted hover:bg-accent-hover text-accent border border-accent rounded-[var(--radius-DEFAULT)] transition-all;
   }
 }
+
+/* Status indicators */
+
+@utility bg-status-online {
+  background-color: var(--color-status-online-bg, rgba(34, 197, 94, 0.2));
+}
+@utility text-status-online {
+  color: var(--color-status-online-text, #4ade80);
+}
+@utility border-status-online {
+  border-color: var(--color-status-online-border, rgba(34, 197, 94, 0.3));
+}
+
+@utility bg-status-offline {
+  background-color: var(--color-status-offline-bg, rgba(239, 68, 68, 0.2));
+}
+@utility text-status-offline {
+  color: var(--color-status-offline-text, #f87171);
+}
+@utility border-status-offline {
+  border-color: var(--color-status-offline-border, rgba(239, 68, 68, 0.3));
+}

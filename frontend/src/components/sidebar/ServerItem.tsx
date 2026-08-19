@@ -11,8 +11,8 @@ const ServerItem: React.FC<{
   const serverData = server.currentData;
   //const serverStatus = server.online ? 'Online' : server.lastSeen ? 'Offline - Last Seen ' + formatDate(server.lastSeen) : 'Offline';
   const statusClass = server.online
-    ? "bg-green-500/20 text-green-400 border-green-500/30"
-    : "bg-red-500/20 text-red-400 border-red-500/30";
+    ? "bg-status-online text-status-online border-status-online"
+    : "bg-status-offline text-status-offline border-status-offline";
 
   const flagEmoji = countryCodeToFlag(server.countryCode);
   const navigate = useNavigate();
