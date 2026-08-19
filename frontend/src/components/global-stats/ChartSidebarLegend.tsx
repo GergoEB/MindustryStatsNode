@@ -40,7 +40,7 @@ export const ChartSidebarLegend: React.FC<ChartSidebarLegendProps> = ({
                     placeholder="Search gamemodes..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-1.5 text-xs text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-orange-500/40 transition-colors"
+                    className="w-full bg-neutral-900 border border-neutral-800 rounded px-3 py-1.5 text-xs text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-orange-500/40 transition-colors"
                 />
             </div>
 
@@ -73,7 +73,7 @@ export const ChartSidebarLegend: React.FC<ChartSidebarLegendProps> = ({
                         return (
                             <label
                                 key={mode}
-                                className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg border cursor-pointer select-none transition-all ${
+                                className={`flex items-center justify-between px-2.5 py-1.5 rounded border cursor-pointer select-none transition-all ${
                                     isChecked
                                         ? "bg-neutral-800/10 border-neutral-700/40 text-neutral-100"
                                         : "bg-transparent border-transparent text-neutral-500 hover:bg-neutral-900/50 hover:text-neutral-300"
@@ -87,7 +87,7 @@ export const ChartSidebarLegend: React.FC<ChartSidebarLegendProps> = ({
                                         className="accent-orange-500 h-3.5 w-3.5 rounded border-neutral-700 bg-neutral-900 text-orange-500 focus:ring-0"
                                     />
                                     <span
-                                        className="w-2 h-2 rounded-full shrink-0 animate-pulse"
+                                        className="w-2 h-2 rounded shrink-0 animate-pulse"
                                         style={{ backgroundColor: color }}
                                     />
                                     <span className="truncate text-xs font-semibold">{mode}</span>

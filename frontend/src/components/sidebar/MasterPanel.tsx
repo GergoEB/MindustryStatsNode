@@ -68,7 +68,7 @@ const MasterPanel: React.FC = () => {
           {!isMobile && (
             <button
               onClick={onToggleCollapse}
-              className="bg-accent-muted hover:bg-accent-hover text-accent p-2 rounded-lg transition-colors border border-accent"
+              className="bg-accent-muted hover:bg-accent-hover text-accent p-2 rounded transition-colors border border-accent"
             >
               <svg
                 className="w-4 h-4 transform transition-transform rotate-180"
@@ -101,7 +101,7 @@ const MasterPanel: React.FC = () => {
       <div className="bg-linear-to-r from-[color:var(--color-surface-1)]/60 to-[color:var(--color-surface-1)]/40 backdrop-blur-md border-b border-default p-3 sm:p-4 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
           {/* Logo/Icon */}
-          <div className="w-10 h-10 bg-linear-to-br from-accent to-[#ff5a1f] rounded-lg flex items-center justify-center shadow-lg shadow-[color:var(--color-accent)]/20">
+          <div className="w-10 h-10 bg-linear-to-br from-accent to-[#ff5a1f] rounded flex items-center justify-center shadow-lg shadow-[color:var(--color-accent)]/20">
             <svg
               className="w-6 h-6 text-white"
               fill="none"
@@ -128,7 +128,7 @@ const MasterPanel: React.FC = () => {
                 delay={100}
               >
                 <span
-                  className={`inline-block w-2 h-2 rounded-full ${connectionStatusInfo.dotColor}`}
+                  className={`inline-block w-2 h-2 rounded ${connectionStatusInfo.dotColor}`}
                 ></span>
               </Tooltip>
               <span className="text-xs text-secondary">{VERSION}</span>
@@ -140,7 +140,7 @@ const MasterPanel: React.FC = () => {
         {!isMobile && (
           <button
             onClick={onToggleCollapse}
-            className="bg-accent-muted hover:bg-accent-hover text-accent p-2 rounded-lg transition-colors border border-accent"
+            className="bg-accent-muted hover:bg-accent-hover text-accent p-2 rounded transition-colors border border-accent"
           >
             <svg
               className="w-4 h-4 transform transition-transform"
@@ -162,7 +162,7 @@ const MasterPanel: React.FC = () => {
       {/* Stats */}
       <div className="p-4 border-default shrink-0">
         <div className="grid grid-cols-2 gap-2 text-center">
-          <div className="bg-surface-secondary backdrop-blur-md border border-default p-2 rounded-lg">
+          <div className="bg-surface-secondary backdrop-blur-md border border-default p-2 rounded">
             <div className="text-secondary text-xs">
               Online / Total Servers
             </div>
@@ -177,7 +177,7 @@ const MasterPanel: React.FC = () => {
             </div>
           </div>
           <div
-            className="bg-surface-secondary backdrop-blur-md border border-default p-2 rounded-lg cursor-pointer hover:bg-accent-hover hover:border-accent transition-all group"
+            className="bg-surface-secondary backdrop-blur-md border border-default p-2 rounded cursor-pointer hover:bg-accent-hover hover:border-accent transition-all group"
             onClick={() => { console.log("click click");  navigate({ to: GlobalRoute.to })}}
           >
             <div className="text-secondary text-xs flex group-hover:text-accent items-center justify-center gap-1">
@@ -284,14 +284,14 @@ const MasterPanel: React.FC = () => {
       {/* Server List */}
       <div className="flex-1 overflow-y-auto p-4 min-h-0">
         {loading && (
-          <div className="text-center p-8 bg-surface-secondary backdrop-blur-md border border-default rounded-xl mb-6">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-accent border-t-transparent"></div>
+          <div className="text-center p-8 bg-surface-secondary backdrop-blur-md border border-default rounded mb-6">
+            <div className="inline-block animate-spin rounded h-8 w-8 border-4 border-accent border-t-transparent"></div>
             <p className="mt-4 text-secondary">Loading server data...</p>
           </div>
         )}
 
         {error && (
-          <div className="bg-red-500/20 border border-red-500 text-red-400 px-6 py-4 rounded-xl backdrop-blur-sm mb-6">
+          <div className="bg-red-500/20 border border-red-500 text-red-400 px-6 py-4 rounded backdrop-blur-sm mb-6">
             <span className="block sm:inline">
               Failed to load server data. Please try again later.
             </span>

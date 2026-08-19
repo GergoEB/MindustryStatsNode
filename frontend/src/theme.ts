@@ -66,7 +66,7 @@ export const theme = {
 export const classes = {
     // Card/Panel backgrounds
     card: {
-        base: 'bg-neutral-800/30 backdrop-blur-md border border-neutral-700/50 rounded-xl',
+        base: 'bg-neutral-800/30 backdrop-blur-md border border-neutral-700/50 rounded',
         header: 'bg-neutral-800/40 backdrop-blur-md border-b border-neutral-700/50',
     },
 
@@ -79,7 +79,7 @@ export const classes = {
 
     // Input fields
     input: {
-        base: 'bg-neutral-700/50 border border-neutral-600/50 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all',
+        base: 'bg-neutral-700/50 border border-neutral-600/50 rounded text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all',
     },
 
     // Text colors
@@ -106,7 +106,7 @@ export const classes = {
 
     // Table styling
     table: {
-        wrapper: 'overflow-x-auto rounded-lg border border-neutral-700/50 shadow-lg',
+        wrapper: 'overflow-x-auto rounded border border-neutral-700/50 shadow-lg',
         header: 'bg-neutral-700/50',
         headerCell: 'text-left text-xs font-medium text-gray-300 uppercase tracking-wider',
         body: 'bg-neutral-800/30 divide-y divide-neutral-700/50',
@@ -115,7 +115,7 @@ export const classes = {
 
     // Pagination
     pagination: {
-        button: 'rounded-lg border transition-colors',
+        button: 'rounded border transition-colors',
         active: 'bg-neutral-700/50 text-gray-300 border-neutral-600/50 hover:bg-neutral-600/50',
         disabled: 'bg-neutral-700/30 text-gray-500 border-neutral-600/30 cursor-not-allowed',
     },

@@ -166,7 +166,7 @@ export const GamemodeChart: React.FC<GamemodeChartProps> = ({
 
             {loading && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-neutral-900/10 z-20">
-                    <div className="animate-spin rounded-full h-7 w-7 border-2 border-orange-500 border-t-transparent" />
+                    <div className="animate-spin rounded h-7 w-7 border-2 border-orange-500 border-t-transparent" />
                     <span className="text-xs text-neutral-400 font-medium tracking-wide animate-pulse">
             Compiling...
           </span>

@@ -64,7 +64,7 @@ const SortDropdown: React.FC<SortDropdownProps> = ({
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1 w-48 bg-surface-secondary border-default backdrop-blur-md border rounded-[var(--radius-DEFAULT)] shadow-xl z-50">
+        <div className="absolute top-full left-0 mt-1 w-48 bg-surface-secondary border-default backdrop-blur-md border rounded shadow-xl z-50">
           {sortOptions.map((option) => (
             <div key={option.key} className="border-b border-subtle last:border-b-0">
               <div
@@ -98,7 +98,7 @@ const SortDropdown: React.FC<SortDropdownProps> = ({
                 <div className="px-3 pb-2">
                   <div className="flex space-x-2">
                     <button
-                      className={`text-xs px-2 py-1 rounded-[var(--radius-DEFAULT)] ${
+                      className={`text-xs px-2 py-1 rounded ${
                         currentDirection === 'asc'
                           ? 'button-accent'
                           : 'bg-surface-primary text-secondary hover:bg-accent-hover'
@@ -112,7 +112,7 @@ const SortDropdown: React.FC<SortDropdownProps> = ({
                       Ascending
                     </button>
                     <button
-                      className={`text-xs px-2 py-1 rounded-[var(--radius-DEFAULT)] ${
+                      className={`text-xs px-2 py-1 rounded ${
                         currentDirection === 'desc'
                           ? 'button-accent'
                           : 'bg-surface-primary text-secondary hover:bg-accent-hover'

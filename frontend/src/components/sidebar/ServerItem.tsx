@@ -53,7 +53,7 @@ const ServerItem: React.FC<{
       </div>
       <div className="flex flex-col items-end">
         <span
-          className={`${statusClass} text-xs px-2 py-1 rounded-full border backdrop-blur-sm mb-1`}
+          className={`${statusClass} text-xs px-2 py-1 rounded border backdrop-blur-sm mb-1`}
         >
           {server.online
             ? "Online - " + (serverData?.ping ?? "N/A") + "ms"

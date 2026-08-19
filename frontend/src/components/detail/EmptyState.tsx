@@ -22,7 +22,7 @@ export const EmptyState: React.FC<{
 }> = ({ title, message, isError, error }) => (
   <div className="h-full flex items-center justify-center">
     <div className="text-center">
-      <div className="w-16 h-16 bg-neutral-700/50 rounded-full flex items-center justify-center mb-4 mx-auto">
+      <div className="w-16 h-16 bg-neutral-700/50 rounded flex items-center justify-center mb-4 mx-auto">
         <PlaceholderIcon />
       </div>
       <h3 className="text-xl font-semibold text-gray-300 mb-2">{title}</h3>

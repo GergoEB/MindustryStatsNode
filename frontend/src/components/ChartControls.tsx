@@ -32,7 +32,7 @@ export const ChartControls: React.FC<ChartControlsProps> = ({
                 <span className="text-xs font-bold text-tertiary uppercase tracking-wider mr-1">
                     Timeframe
                 </span>
-                <div className="flex p-1 rounded-[var(--radius-DEFAULT)] border border-default bg-surface-secondary">
+                <div className="flex p-1 rounded border border-default bg-surface-secondary">
                     {DATE_RANGE_OPTIONS.map((option) => (
                         <button
                             key={option.value}
@@ -54,7 +54,7 @@ export const ChartControls: React.FC<ChartControlsProps> = ({
                 <span className="text-xs font-bold text-tertiary uppercase tracking-wider mr-1">
                     View
                 </span>
-                <div className="flex p-1 rounded-[var(--radius-DEFAULT)] border border-default bg-surface-secondary">
+                <div className="flex p-1 rounded border border-default bg-surface-secondary">
                     {(["lines", "aggregated"] as ViewMode[]).map((mode) => (
                         <button
                             key={mode}
@@ -74,7 +74,7 @@ export const ChartControls: React.FC<ChartControlsProps> = ({
                     <select
                         value={selectedGamemode ?? ""}
                         onChange={handleGamemodeChange}
-                        className="appearance-none border border-default text-primary text-xs font-bold rounded-[var(--radius-DEFAULT)] pl-3 pr-8 py-2 focus:outline-none focus:border-accent bg-surface-secondary transition-all cursor-pointer"
+                        className="appearance-none border border-default text-primary text-xs font-bold rounded pl-3 pr-8 py-2 focus:outline-none focus:border-accent bg-surface-secondary transition-all cursor-pointer"
                     >
                         <option value="">🌐 All Gamemodes</option>
                         {[...gamemodeList]

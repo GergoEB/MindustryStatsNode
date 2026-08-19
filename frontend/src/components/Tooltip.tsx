@@ -49,7 +49,7 @@ const Tooltip: React.FC<TooltipProps> = ({
   }, []);
 
   const getPositionClasses = () => {
-    const baseClasses = 'absolute z-50 px-2 py-1 text-xs rounded-[var(--radius-DEFAULT)] pointer-events-none w-max max-w-full';
+    const baseClasses = 'absolute z-50 px-2 py-1 text-xs rounded pointer-events-none w-max max-w-full';
     const backgroundClasses = 'bg-surface-tertiary backdrop-blur-md border border-subtle text-primary shadow-xl';
     const transitionClasses = `transition-all duration-150 ${showTooltip ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`;
     
