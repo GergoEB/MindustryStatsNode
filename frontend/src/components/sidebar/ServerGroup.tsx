@@ -32,30 +32,26 @@ const ServerGroup: React.FC<{
 
   return (
     <div
-      className={`bg-neutral-800/50 backdrop-blur-md border rounded-xl overflow-hidden ${
-        isSelected
-          ? "border-orange-500/50"
-          : "border-neutral-700/50"
-      } ${expanded ? "border-orange-400/20 border-2" : "hover:border-orange-500/30"}`}
+      className={`card-base backdrop-blur-md overflow-hidden transition-all ${
+        isSelected ? "border-accent" : "border-default"
+      }`}
     >
       <div
-        className="bg-neutral-900/50 backdrop-blur-sm border-neutral-700/50 px-4 py-3 flex justify-between items-center cursor-pointer hover:bg-neutral-800/50 transition-colors ${(expanded ? 'border-b' : '')}"
+        className={`bg-surface-secondary backdrop-blur-sm px-4 py-3 flex justify-between items-center cursor-pointer hover:bg-accent-hover transition-colors ${
+          expanded ? "border-b border-subtle" : ""
+        }`}
         onClick={onToggleExpand}
       >
         <div>
-          <h3 className="font-semibold text-white text-sm">{name}</h3>
-          <p className="text-xs text-gray-400">
+          <h3 className="font-semibold text-primary text-sm">{name}</h3>
+          <p className="text-xs text-secondary">
             {onlineServersCount}/{servers.length} online, {totalPlayers} players
           </p>
         </div>
         <div className="flex items-center space-x-2">
           <button
             onClick={() => navigate({ to: `/network/${networkId}` })}
-            className={`p-1.5 rounded-lg transition-colors ${
-              isSelected
-                ? "bg-orange-500/30 text-orange-400/50"
-                : "bg-neutral-700/30 text-gray-400 hover:bg-orange-700/10 hover:border-orange-500/30 hover:text-gray-300"
-            }`}
+            className={`p-1.5 ${isSelected ? "button-accent" : "button-secondary"}`}
             title="View network graph"
           >
             <svg
@@ -72,11 +68,13 @@ const ServerGroup: React.FC<{
               />
             </svg>
           </button>
-          <span className="text-lg font-bold text-orange-400 drop-shadow-[0_0_10px_rgba(249,115,22,0.3)]">
+          <span className="text-lg font-bold text-accent">
             {totalPlayers}
           </span>
           <svg
-            className={`h-4 w-4 text-orange-400 transform transition-transform ${expanded ? "rotate-180" : ""}`}
+            className={`h-4 w-4 text-accent transform transition-transform ${
+              expanded ? "rotate-180" : ""
+            }`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -91,7 +89,7 @@ const ServerGroup: React.FC<{
         </div>
       </div>
       {expanded && (
-        <div className="divide-y divide-neutral-700/50">
+        <div className="divide-y divide-subtle">
           {servers.map((server) => (
             <ServerItem
               key={`${server.host}-${server.port}`}

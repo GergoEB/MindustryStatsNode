@@ -21,14 +21,14 @@ const ServerItem: React.FC<{
     <div
       className={`p-3 cursor-pointer transition-colors flex items-center justify-between ${
         isSelected
-          ? "bg-orange-500/20 border-l-4 border-l-orange-400"
-          : "hover:bg-neutral-700/30"
+          ? "bg-accent-muted border-l-4 border-accent"
+          : "hover:bg-accent-hover"
       }`}
       onClick={() => navigate({ to: `/server/${server.id}` })}
     >
       <div className="flex flex-col flex-1 min-w-0 mr-4">
         {serverData?.serverName && (
-          <div className="text-sm font-bold text-white truncate mb-1 flex items-center gap-1.5">
+          <div className="text-sm font-bold text-primary truncate mb-1 flex items-center gap-1.5">
             <span className="text-base" title={server.countryCode || "Unknown"}>
               {flagEmoji}
             </span>
@@ -38,7 +38,7 @@ const ServerItem: React.FC<{
 
         {serverData?.description && (
           <div
-            className="text-xs text-gray-300 truncate mb-2"
+            className="text-xs text-secondary truncate mb-2"
             dangerouslySetInnerHTML={{
               __html: formatUnsafeText(serverData.description),
             }}
@@ -46,7 +46,7 @@ const ServerItem: React.FC<{
         )}
 
         {server.online && serverData && (
-          <div className="text-s text-gray-400">
+          <div className="text-xs text-tertiary">
             <span>{String(removeColors(serverData.mapName)) || "Unknown"}</span>
           </div>
         )}
@@ -61,13 +61,13 @@ const ServerItem: React.FC<{
         </span>
         {server.online && serverData && (
           <div className="text-right">
-            <div className="text-lg font-bold text-orange-400 drop-shadow-[0_0_10px_rgba(249,115,22,0.3)]">
+            <div className="text-lg font-bold text-accent">
               {String(serverData.players)}
-              <span className="text-gray-500 ml-1">
+              <span className="text-tertiary ml-1">
                 / {String(serverData.playerLimit)}
               </span>
             </div>
-            <div className="text-xs text-gray-400">players</div>
+            <div className="text-xs text-tertiary">players</div>
           </div>
         )}
       </div>

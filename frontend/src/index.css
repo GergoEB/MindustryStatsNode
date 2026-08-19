@@ -1,5 +1,34 @@
 @import "tailwindcss";
 
+@theme {
+  /* Surfaces */
+  --color-bg: #0f0f0f;
+  --color-surface-1: #161616;
+  --color-surface-2: #1d1d1d;
+  --color-surface-3: #252525;
+ 
+  /* Orange accent, pre-mixed instead of computed at runtime */
+  --color-accent: #ff6b35;
+  --color-accent-muted: rgba(255, 107, 53, 0.12);
+  --color-accent-border: rgba(255, 107, 53, 0.25);
+  --color-accent-hover: rgba(255, 107, 53, 0.18);
+
+  --scrollbar: #ff6b353f;
+ 
+  /* Text */
+  --color-text-primary: #f5f5f5;
+  --color-text-secondary: #9a9a9a;
+  --color-text-tertiary: #6b6b6b;
+ 
+  /* Borders */
+  --color-border-subtle: rgba(255, 255, 255, 0.06);
+  --color-border-default: rgba(255, 255, 255, 0.1);
+ 
+  /* Radius - the 5px "there but not obvious" roundness */
+  --radius-DEFAULT: 5px;
+}
+ 
+
 @font-face {
     font-family: Mindustry;
     src: url('/src/assets/mindustry_font.woff') format("woff");
@@ -15,6 +44,7 @@
 /* Apply system font with Mindustry as fallback for icons */
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif, Mindustry;
+    user-select: none;
 }
 
 .mindustry-font {
@@ -24,7 +54,7 @@ body {
 /* Custom scrollbar styling - orange tinted, transparent track */
 * {
     scrollbar-width: thin;
-    scrollbar-color: rgba(249, 115, 22, 0.3) transparent;
+    scrollbar-color: var(--scrollbar) transparent;
 }
 
 /* Webkit browsers (Chrome, Safari, Edge) */
@@ -38,18 +68,82 @@ body {
 }
 
 *::-webkit-scrollbar-thumb {
-    background: rgba(249, 115, 22, 0.3);
+    /* Text Primary but 0.3 opacity */
+    background: var(--scrollbar);
     border-radius: 4px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-    background: rgba(249, 115, 22, 0.5);
+    background: var(--scrollbar);
 }
 
 *::-webkit-scrollbar-corner {
     background: transparent;
 }
 
-/*#root {
-     background-image: url("/src/assets/background.png");
-}*/
+/* Background utilities */
+@utility bg-surface-primary {
+  background-color: var(--color-surface-1);
+}
+@utility bg-surface-secondary {
+  background-color: var(--color-surface-2);
+}
+@utility bg-surface-tertiary {
+  background-color: var(--color-surface-3);
+}
+
+/* Accent utilities */
+@utility bg-accent {
+  background-color: var(--color-accent);
+}
+@utility bg-accent-muted {
+  background-color: var(--color-accent-muted);
+}
+@utility bg-accent-hover {
+  background-color: var(--color-accent-hover);
+}
+
+/* Text utilities */
+@utility text-primary {
+  color: var(--color-text-primary);
+}
+@utility text-secondary {
+  color: var(--color-text-secondary);
+}
+@utility text-tertiary {
+  color: var(--color-text-tertiary);
+}
+@utility text-accent {
+  color: var(--color-accent);
+}
+
+/* Border utilities */
+@utility border-subtle {
+  border-color: var(--color-border-subtle);
+}
+@utility border-default {
+  border-color: var(--color-border-default);
+}
+@utility border-accent {
+  border-color: var(--color-accent-border);
+}
+
+/* card-base has to be a @utility too, since card-interactive composes it below */
+@utility card-base {
+  @apply bg-surface-primary border border-default rounded-[var(--radius-DEFAULT)];
+}
+
+/* Combined interactive elements — these aren't composed further, so plain @layer components is fine */
+@layer components {
+  .card-interactive {
+    @apply card-base hover:bg-accent-hover hover:border-accent transition-all;
+  }
+
+  .button-secondary {
+    @apply bg-surface-primary hover:bg-accent-muted text-secondary hover:text-primary border border-default hover:border-accent rounded-[var(--radius-DEFAULT)] transition-colors;
+  }
+
+  .button-accent {
+    @apply bg-accent-muted hover:bg-accent-hover text-accent border border-accent rounded-[var(--radius-DEFAULT)] transition-all;
+  }
+}

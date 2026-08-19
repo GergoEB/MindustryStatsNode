@@ -10,10 +10,10 @@ const MobileHeader: React.FC<{ title: string; onBack: () => void }> = ({
   title,
   onBack,
 }) => (
-  <div className="bg-neutral-800 backdrop-blur-md border-b border-neutral-700/50 p-4 flex items-center">
+  <div className="bg-surface-primary backdrop-blur-md border-b border-subtle p-4 flex items-center">
     <button
       onClick={onBack}
-      className="bg-neutral-700/50 hover:bg-neutral-600/50 text-gray-300 p-2 rounded-lg transition-colors border border-neutral-600/50 mr-4"
+      className="button-secondary p-2 mr-4"
     >
       <svg
         className="w-4 h-4"
@@ -29,7 +29,7 @@ const MobileHeader: React.FC<{ title: string; onBack: () => void }> = ({
         />
       </svg>
     </button>
-    <h2 className="text-lg font-semibold text-white">{title}</h2>
+    <h2 className="text-lg font-semibold text-primary">{title}</h2>
   </div>
 );
 

@@ -63,12 +63,12 @@ const MasterPanel: React.FC = () => {
   // --- COLLAPSED VIEW PATH ---
   if (isCollapsed) {
     return (
-      <div className="relative transition-all duration-300 w-16 bg-neutral-900 backdrop-blur-md border-r border-neutral-800/50 flex flex-col h-screen min-h-screen">
-        <div className="bg-linear-to-r from-neutral-900/60 to-neutral-900/40 backdrop-blur-md border-b border-neutral-900/50 p-3 sm:p-4 flex items-center justify-center shrink-0">
+      <div className="relative transition-all duration-300 w-16 bg-surface-primary backdrop-blur-md border-r border-default flex flex-col h-screen min-h-screen">
+        <div className="bg-linear-to-r from-[color:var(--color-surface-1)]/60 to-[color:var(--color-surface-1)]/40 backdrop-blur-md border-b border-default p-3 sm:p-4 flex items-center justify-center shrink-0">
           {!isMobile && (
             <button
               onClick={onToggleCollapse}
-              className="bg-neutral-810/50 hover:bg-orange-700/10 hover:border-orange-500/40 text-orange-500 p-2 rounded-lg transition-colors border border-neutral-600/50"
+              className="bg-accent-muted hover:bg-accent-hover text-accent p-2 rounded-lg transition-colors border border-accent"
             >
               <svg
                 className="w-4 h-4 transform transition-transform rotate-180"
@@ -95,13 +95,13 @@ const MasterPanel: React.FC = () => {
     <div
       className={`relative transition-all duration-300 ${
         isMobile ? "w-full" : "w-3/12"
-      } bg-neutral-900 backdrop-blur-md border-r border-neutral-800/50 flex flex-col h-screen min-h-screen min-w-sm`}
+      } bg-surface-primary backdrop-blur-md border-r border-default flex flex-col h-screen min-h-screen min-w-sm`}
     >
       {/* Header */}
-      <div className="bg-linear-to-r from-neutral-900/60 to-neutral-900/40 backdrop-blur-md border-b border-neutral-900/50 p-3 sm:p-4 flex items-center justify-between shrink-0">
+      <div className="bg-linear-to-r from-[color:var(--color-surface-1)]/60 to-[color:var(--color-surface-1)]/40 backdrop-blur-md border-b border-default p-3 sm:p-4 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
           {/* Logo/Icon */}
-          <div className="w-10 h-10 bg-linear-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center shadow-lg shadow-orange-500/20">
+          <div className="w-10 h-10 bg-linear-to-br from-accent to-[#ff5a1f] rounded-lg flex items-center justify-center shadow-lg shadow-[color:var(--color-accent)]/20">
             <svg
               className="w-6 h-6 text-white"
               fill="none"
@@ -118,8 +118,8 @@ const MasterPanel: React.FC = () => {
           </div>
           {/* Title and status */}
           <div className="flex flex-col">
-            <h1 className="text-lg sm:text-xl font-bold text-white">
-              Mindustry <span className="text-orange-400">Tracker</span>
+            <h1 className="text-lg sm:text-xl font-bold text-primary">
+              Mindustry <span className="text-accent">Tracker</span>
             </h1>
             <div className="flex items-center gap-1.5">
               <Tooltip
@@ -131,7 +131,7 @@ const MasterPanel: React.FC = () => {
                   className={`inline-block w-2 h-2 rounded-full ${connectionStatusInfo.dotColor}`}
                 ></span>
               </Tooltip>
-              <span className="text-xs text-gray-400">{VERSION}</span>
+              <span className="text-xs text-secondary">{VERSION}</span>
             </div>
           </div>
         </div>
@@ -140,7 +140,7 @@ const MasterPanel: React.FC = () => {
         {!isMobile && (
           <button
             onClick={onToggleCollapse}
-            className="bg-neutral-810/50 hover:bg-orange-700/10 hover:border-orange-500/40 text-orange-500 p-2 rounded-lg transition-colors border border-neutral-600/50"
+            className="bg-accent-muted hover:bg-accent-hover text-accent p-2 rounded-lg transition-colors border border-accent"
           >
             <svg
               className="w-4 h-4 transform transition-transform"
@@ -160,27 +160,27 @@ const MasterPanel: React.FC = () => {
       </div>
 
       {/* Stats */}
-      <div className="p-4 border-neutral-800/50 shrink-0">
+      <div className="p-4 border-default shrink-0">
         <div className="grid grid-cols-2 gap-2 text-center">
-          <div className="bg-neutral-800 backdrop-blur-md border border-neutral-800/50 p-2 rounded-lg">
-            <div className="text-gray-300 text-xs">
+          <div className="bg-surface-secondary backdrop-blur-md border border-default p-2 rounded-lg">
+            <div className="text-secondary text-xs">
               Online / Total Servers
             </div>
             <div className="flex items-center justify-center space-x-2">
               <span className="text-lg font-bold text-green-400">
                 {onlineServers}
               </span>
-              <span className="text-lg font-bold text-gray-300"> / </span>
-              <span className="text-lg font-bold text-white">
+              <span className="text-lg font-bold text-secondary"> / </span>
+              <span className="text-lg font-bold text-primary">
                 {totalServers}
               </span>
             </div>
           </div>
           <div
-            className="bg-neutral-800 backdrop-blur-md border border-neutral-800/50 p-2 rounded-lg cursor-pointer hover:bg-orange-700/10 hover:border-orange-500/40 transition-all group"
+            className="bg-surface-secondary backdrop-blur-md border border-default p-2 rounded-lg cursor-pointer hover:bg-accent-hover hover:border-accent transition-all group"
             onClick={() => { console.log("click click");  navigate({ to: GlobalRoute.to })}}
           >
-            <div className="text-gray-300 text-xs flex group-hover:text-orange-400 items-center justify-center gap-1">
+            <div className="text-secondary text-xs flex group-hover:text-accent items-center justify-center gap-1">
               Total Players
               <Tooltip
                 content="View global player history"
@@ -188,7 +188,7 @@ const MasterPanel: React.FC = () => {
                 delay={200}
               >
                 <svg
-                  className="w-3.5 h-3.5 text-gray-300 group-hover:text-orange-400 transition-colors"
+                  className="w-3.5 h-3.5 text-secondary group-hover:text-accent transition-colors"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -202,7 +202,7 @@ const MasterPanel: React.FC = () => {
                 </svg>
               </Tooltip>
             </div>
-            <div className="text-lg font-bold text-orange-400 drop-shadow-[0_0_10px_rgba(249,115,22,0.3)]">
+            <div className="text-lg font-bold text-accent drop-shadow-[0_0_10px_rgba(255,107,53,0.3)]">
               {totalPlayers}
             </div>
           </div>
@@ -210,17 +210,17 @@ const MasterPanel: React.FC = () => {
       </div>
 
       {/* Inactive Servers Button */}
-      <div className="px-4 pb-3 border-b border-neutral-800/50 shrink-0">
+      <div className="px-4 pb-3 border-b border-default shrink-0">
         <button
           onClick={() => navigate({ to: InactiveRoute.to })}
-          className="w-full bg-neutral-800 hover:bg-orange-700/10 hover:border-orange-500/40 text-gray-300 hover:text-white px-4 py-2 rounded-lg transition-colors border border-neutral-800/50 text-sm font-medium"
+          className="w-full button-secondary text-sm font-medium p-2"
         >
           Server List Statistics
         </button>
       </div>
 
       {/* Controls */}
-      <div className="p-4 border-b border-neutral-900/50 shrink-0">
+      <div className="p-4 border-b border-subtle shrink-0">
         {/* Search Bar */}
         <div className="mb-3">
           <SearchBar
@@ -284,9 +284,9 @@ const MasterPanel: React.FC = () => {
       {/* Server List */}
       <div className="flex-1 overflow-y-auto p-4 min-h-0">
         {loading && (
-          <div className="text-center p-8 bg-neutral-800 backdrop-blur-md border border-neutral-800/50 rounded-xl mb-6">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-orange-400 border-t-transparent"></div>
-            <p className="mt-4 text-gray-300">Loading server data...</p>
+          <div className="text-center p-8 bg-surface-secondary backdrop-blur-md border border-default rounded-xl mb-6">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-accent border-t-transparent"></div>
+            <p className="mt-4 text-secondary">Loading server data...</p>
           </div>
         )}
 
@@ -331,8 +331,8 @@ const MasterPanel: React.FC = () => {
       </div>
 
       {/* Footer */}
-      <div className="p-4 border-t border-neutral-800/50 shrink-0">
-        <p className="text-xs text-gray-500">
+      <div className="p-4 border-t border-default shrink-0">
+        <p className="text-xs text-tertiary">
           Last updated: {lastUpdated} | Commit: {COMMIT}
         </p>
       </div>
