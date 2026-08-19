@@ -21,8 +21,8 @@ const ServerItem: React.FC<{
     <div
       className={`p-3 cursor-pointer transition-colors flex items-center justify-between ${
         isSelected
-          ? "bg-accent-muted border-l-4 border-accent"
-          : "hover:bg-accent-hover"
+          ? "bg-accent-muted border-l-4 border-default"
+          : "hover:bg-accent-hover border-default"
       }`}
       onClick={() => navigate({ to: `/server/${server.id}` })}
     >
