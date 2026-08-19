@@ -182,24 +182,22 @@ const NetworkHistoryChart = ({ network }: { network: NetworkDetails }) => {
           <button
             key={option.value}
             onClick={() => setSelectedRange(option.value)}
-            className={`px-3 py-1 text-sm rounded-lg transition-colors border ${
-              selectedRange === option.value
-                ? "bg-orange-500/30 text-orange-400 border-orange-500/50"
-                : "bg-neutral-700/30 text-gray-400 border-neutral-600/50 hover:bg-neutral-600/30"
+            className={`px-3 py-1 text-sm ${
+              selectedRange === option.value ? "button-accent" : "button-secondary"
             }`}
           >
             {option.label}
           </button>
         ))}
       </div>
-
+  
       {/* Custom Date Range Inputs */}
       {selectedRange === "custom" && (
         <div className="flex gap-4 mb-4">
           <div className="flex items-center gap-2">
             <label
               htmlFor="custom-start-date"
-              className="text-sm text-gray-400"
+              className="text-sm text-tertiary"
             >
               From:
             </label>
@@ -209,11 +207,11 @@ const NetworkHistoryChart = ({ network }: { network: NetworkDetails }) => {
               value={customStartDate}
               max={today}
               onChange={(e) => setCustomStartDate(e.target.value)}
-              className="bg-neutral-700/50 border border-neutral-600/50 rounded-lg px-3 py-1 text-sm text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+              className="bg-surface-tertiary border border-default rounded px-3 py-1 text-sm text-primary focus:outline-none focus:border-accent"
             />
           </div>
           <div className="flex items-center gap-2">
-            <label htmlFor="custom-end-date" className="text-sm text-gray-400">
+            <label htmlFor="custom-end-date" className="text-sm text-tertiary">
               To:
             </label>
             <input
@@ -222,32 +220,32 @@ const NetworkHistoryChart = ({ network }: { network: NetworkDetails }) => {
               value={customEndDate}
               max={today}
               onChange={(e) => setCustomEndDate(e.target.value)}
-              className="bg-neutral-700/50 border border-neutral-600/50 rounded-lg px-3 py-1 text-sm text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+              className="bg-surface-tertiary border border-default rounded px-3 py-1 text-sm text-primary focus:outline-none focus:border-accent"
             />
           </div>
         </div>
       )}
-
+  
       {/* Date Range Error */}
       {dateError && (
-        <div className="text-red-400 text-sm mb-4">{dateError}</div>
+        <div className="text-status-offline text-sm mb-4">{dateError}</div>
       )}
-
+  
       {/* Fetch Error */}
       {fetchError && (
-        <div className="text-red-400 text-sm mb-4 bg-red-500/10 border border-red-500/30 rounded-lg p-3">
+        <div className="text-status-offline text-sm mb-4 bg-status-offline border border-status-offline rounded p-3">
           {fetchError}
         </div>
       )}
-
+  
       {/* Loading indicator */}
       {loading && (
         <div className="flex items-center justify-center py-4">
-          <div className="animate-spin rounded-full h-6 w-6 border-2 border-orange-400 border-t-transparent"></div>
-          <span className="ml-2 text-gray-400 text-sm">Loading history...</span>
+          <div className="animate-spin rounded h-6 w-6 border-2 border-accent border-t-transparent"></div>
+          <span className="ml-2 text-tertiary text-sm">Loading history...</span>
         </div>
       )}
-
+  
       {/* Chart */}
       <div className="flex-1 min-h-0">
         <canvas ref={chartRef}></canvas>

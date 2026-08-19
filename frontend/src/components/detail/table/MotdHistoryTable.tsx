@@ -11,7 +11,6 @@ const MotdHistoryTable: React.FC<{ motdHistory: ServerMotdData[] }> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Sort by validFrom descending (newest first)
   const sortedHistory = useMemo(() => {
     if (!motdHistory || motdHistory.length === 0) return [];
     return [...motdHistory].sort(
@@ -20,7 +19,6 @@ const MotdHistoryTable: React.FC<{ motdHistory: ServerMotdData[] }> = ({
     );
   }, [motdHistory]);
 
-  // Filter based on search term
   const filteredHistory = useMemo(() => {
     const lowerCaseSearchTerm = searchTerm.toLowerCase();
     return sortedHistory.filter(
@@ -34,22 +32,17 @@ const MotdHistoryTable: React.FC<{ motdHistory: ServerMotdData[] }> = ({
     );
   }, [sortedHistory, searchTerm]);
 
-  // Pagination
   const totalPages = Math.ceil(filteredHistory.length / ITEMS_PER_PAGE);
   const paginatedHistory = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredHistory.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   }, [filteredHistory, currentPage]);
 
-  // Detect changes between consecutive items
-  // Data is sorted newest-first, so compare with previous (newer) item
-  // to highlight when this entry differs from what came after it
   const hasNameChanged = (
     currentItem: ServerMotdData,
     index: number,
   ): boolean => {
     const globalIndex = (currentPage - 1) * ITEMS_PER_PAGE + index;
-    // Compare with the previous (newer) entry in the sorted list
     if (globalIndex === 0) return false;
     const previousItem = filteredHistory[globalIndex - 1];
     return (
@@ -64,7 +57,6 @@ const MotdHistoryTable: React.FC<{ motdHistory: ServerMotdData[] }> = ({
     index: number,
   ): boolean => {
     const globalIndex = (currentPage - 1) * ITEMS_PER_PAGE + index;
-    // Compare with the previous (newer) entry in the sorted list
     if (globalIndex === 0) return false;
     const previousItem = filteredHistory[globalIndex - 1];
     return (
@@ -79,13 +71,11 @@ const MotdHistoryTable: React.FC<{ motdHistory: ServerMotdData[] }> = ({
     index: number,
   ): boolean => {
     const globalIndex = (currentPage - 1) * ITEMS_PER_PAGE + index;
-    // Compare with the previous (newer) entry in the sorted list
     if (globalIndex === 0) return false;
     const previousItem = filteredHistory[globalIndex - 1];
     return previousItem && currentItem.modeName !== previousItem.modeName;
   };
 
-  // Reset to page 1 when search changes
   React.useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm]);
@@ -95,69 +85,61 @@ const MotdHistoryTable: React.FC<{ motdHistory: ServerMotdData[] }> = ({
       <input
         type="text"
         placeholder="Search MOTD, description, or mode..."
-        className="w-full p-2 sm:p-3 mb-3 sm:mb-4 bg-neutral-700/50 border border-neutral-600/50 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all text-sm"
+        className="w-full p-2 sm:p-3 mb-3 sm:mb-4 bg-surface-secondary border border-default rounded text-primary placeholder:text-tertiary focus:outline-none focus:ring-2 focus:ring-accent transition-all text-sm"
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
       />
 
       {paginatedHistory.length > 0 ? (
         <>
-          <div className="overflow-x-auto rounded-lg border border-neutral-700/50 shadow-lg -mx-1 px-1">
-            <table className="w-full divide-y divide-neutral-700/50">
-              <thead className="bg-neutral-700/50">
+          <div className="overflow-x-auto card-base shadow-lg -mx-1 px-1">
+            <table className="w-full divide-y divide-subtle">
+              <thead className="bg-surface-secondary">
                 <tr>
                   <th
                     scope="col"
-                    className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider"
+                    className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider"
                   >
                     MOTD
                   </th>
                   <th
                     scope="col"
-                    className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider hidden sm:table-cell"
+                    className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider hidden sm:table-cell"
                   >
                     Description
                   </th>
                   <th
                     scope="col"
-                    className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider hidden md:table-cell"
-                  >
-                    Mode
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider hidden lg:table-cell"
+                    className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider hidden lg:table-cell"
                   >
                     From - To
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-neutral-800/30 divide-y divide-neutral-700/50">
+              <tbody className="bg-surface-primary divide-y divide-subtle">
                 {paginatedHistory.map((item, index) => (
                   <tr
                     key={item.id || index}
-                    className="hover:bg-neutral-700/30 transition-colors"
+                    className="hover:bg-accent-muted transition-colors"
                   >
                     <td
                       className={`px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium ${
                         hasNameChanged(item, index)
-                          ? "text-orange-400 bg-orange-500/10"
-                          : "text-white"
+                          ? "text-accent bg-accent-muted"
+                          : "text-primary"
                       }`}
                     >
                       <div className="break-words max-w-[120px] sm:max-w-none">
                         {String(removeColors(item.serverName))}
                       </div>
                       {hasNameChanged(item, index) && (
-                        <span className="ml-1 text-xs text-orange-400">●</span>
+                        <span className="ml-1 text-xs text-accent">●</span>
                       )}
-                      {/* Show date on mobile only */}
-                      <div className="text-xs text-gray-500 mt-1 lg:hidden">
+                      <div className="text-xs text-tertiary mt-1 lg:hidden">
                         {formatDateTimeHuman(item.validFrom)}
                       </div>
-                      {/* Show description snippet on mobile */}
                       <div
-                        className="text-xs text-gray-400 mt-1 truncate max-w-[120px] sm:hidden"
+                        className="text-xs text-tertiary mt-1 truncate max-w-[120px] sm:hidden"
                         title={String(removeColors(item.description))}
                       >
                         {String(removeColors(item.description))}
@@ -166,29 +148,17 @@ const MotdHistoryTable: React.FC<{ motdHistory: ServerMotdData[] }> = ({
                     <td
                       className={`px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm max-w-[200px] truncate hidden sm:table-cell ${
                         hasDescriptionChanged(item, index)
-                          ? "text-orange-400 bg-orange-500/10"
-                          : "text-gray-300"
+                          ? "text-accent bg-accent-muted"
+                          : "text-secondary"
                       }`}
                       title={String(removeColors(item.description))}
                     >
                       {String(removeColors(item.description))}
                       {hasDescriptionChanged(item, index) && (
-                        <span className="ml-1 text-xs text-orange-400">●</span>
+                        <span className="ml-1 text-xs text-accent">●</span>
                       )}
                     </td>
-                    <td
-                      className={`px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm hidden md:table-cell ${
-                        hasModeNameChanged(item, index)
-                          ? "text-orange-400 bg-orange-500/10"
-                          : "text-gray-300"
-                      }`}
-                    >
-                      {item.modeName || "Unknown"}
-                      {hasModeNameChanged(item, index) && (
-                        <span className="ml-1 text-xs text-orange-400">●</span>
-                      )}
-                    </td>
-                    <td className="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm text-gray-400 hidden lg:table-cell">
+                    <td className="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm text-tertiary hidden lg:table-cell">
                       {formatDateTimeHuman(item.validFrom)} -{" "}
                       {item.validTo
                         ? formatDateTimeHuman(item.validTo)
@@ -200,10 +170,9 @@ const MotdHistoryTable: React.FC<{ motdHistory: ServerMotdData[] }> = ({
             </table>
           </div>
 
-          {/* Pagination Controls - Mobile friendly */}
           {totalPages > 1 && (
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-3 gap-2">
-              <div className="text-xs text-gray-400 text-center sm:text-left">
+              <div className="text-xs text-tertiary text-center sm:text-left">
                 {(currentPage - 1) * ITEMS_PER_PAGE + 1}-
                 {Math.min(currentPage * ITEMS_PER_PAGE, filteredHistory.length)}{" "}
                 of {filteredHistory.length}
@@ -212,15 +181,15 @@ const MotdHistoryTable: React.FC<{ motdHistory: ServerMotdData[] }> = ({
                 <button
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  className={`px-2.5 py-1 text-xs rounded-lg border transition-colors ${
+                  className={`px-2.5 py-1 text-xs ${
                     currentPage === 1
-                      ? "bg-neutral-700/30 text-gray-500 border-neutral-600/30 cursor-not-allowed"
-                      : "bg-neutral-700/50 text-gray-300 border-neutral-600/50 hover:bg-neutral-600/50"
+                      ? "bg-surface-tertiary text-tertiary border border-subtle cursor-not-allowed rounded"
+                      : "button-secondary"
                   }`}
                 >
                   ←
                 </button>
-                <span className="px-2 py-1 text-xs text-gray-400">
+                <span className="px-2 py-1 text-xs text-tertiary">
                   {currentPage}/{totalPages}
                 </span>
                 <button
@@ -228,10 +197,10 @@ const MotdHistoryTable: React.FC<{ motdHistory: ServerMotdData[] }> = ({
                     setCurrentPage((p) => Math.min(totalPages, p + 1))
                   }
                   disabled={currentPage === totalPages}
-                  className={`px-2.5 py-1 text-xs rounded-lg border transition-colors ${
+                  className={`px-2.5 py-1 text-xs ${
                     currentPage === totalPages
-                      ? "bg-neutral-700/30 text-gray-500 border-neutral-600/30 cursor-not-allowed"
-                      : "bg-neutral-700/50 text-gray-300 border-neutral-600/50 hover:bg-neutral-600/50"
+                      ? "bg-surface-tertiary text-tertiary border border-subtle cursor-not-allowed rounded"
+                      : "button-secondary"
                   }`}
                 >
                   →
@@ -241,7 +210,7 @@ const MotdHistoryTable: React.FC<{ motdHistory: ServerMotdData[] }> = ({
           )}
         </>
       ) : (
-        <p className="text-gray-400 text-center py-6 sm:py-8 text-sm">
+        <p className="text-tertiary text-center py-6 sm:py-8 text-sm">
           No MOTD history available or matching your search.
         </p>
       )}
