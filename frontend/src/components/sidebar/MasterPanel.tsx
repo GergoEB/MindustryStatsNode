@@ -64,7 +64,7 @@ const MasterPanel: React.FC = () => {
   if (isCollapsed) {
     return (
       <div className="relative transition-all duration-300 w-16 bg-surface-primary backdrop-blur-md border-r border-default flex flex-col h-screen min-h-screen">
-        <div className="bg-linear-to-r from-[color:var(--color-surface-1)]/60 to-[color:var(--color-surface-1)]/40 backdrop-blur-md border-b border-default p-3 sm:p-4 flex items-center justify-center shrink-0">
+        <div className="bg-linear-to-r from-surface-primary-1/60 to-surface-primary/40 backdrop-blur-md border-b border-default p-3 sm:p-4 flex items-center justify-center shrink-0">
           {!isMobile && (
             <button
               onClick={onToggleCollapse}
@@ -98,10 +98,10 @@ const MasterPanel: React.FC = () => {
       } bg-surface-primary backdrop-blur-md border-r border-default flex flex-col h-screen min-h-screen min-w-sm`}
     >
       {/* Header */}
-      <div className="bg-linear-to-r from-[color:var(--color-surface-1)]/60 to-[color:var(--color-surface-1)]/40 backdrop-blur-md border-b border-default p-3 sm:p-4 flex items-center justify-between shrink-0">
+      <div className="bg-linear-to-r from-surface-primary/60 to-surface-primary/40 backdrop-blur-md border-b border-default p-3 sm:p-4 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
           {/* Logo/Icon */}
-          <div className="w-10 h-10 bg-linear-to-br from-accent to-[#ff5a1f] rounded flex items-center justify-center shadow-lg shadow-[color:var(--color-accent)]/20">
+          <div className="w-10 h-10 bg-linear-to-br from-accent to-[#ff5a1f] rounded flex items-center justify-center shadow-lg shadow-accent/20">
             <svg
               className="w-6 h-6 text-white"
               fill="none"
