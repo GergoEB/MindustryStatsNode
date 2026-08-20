@@ -163,11 +163,9 @@ const MasterPanel: React.FC = () => {
       <div className="p-4 border-default shrink-0">
         <div className="grid grid-cols-2 gap-2 text-center">
           <div className="bg-surface-secondary backdrop-blur-md border border-default p-2 rounded">
-            <div className="text-secondary text-xs">
-              Online / Total Servers
-            </div>
+            <div className="text-secondary text-xs">Online / Total Servers</div>
             <div className="flex items-center justify-center space-x-2">
-              <span className="text-lg font-bold text-green-400">
+              <span className="text-lg font-bold text-status-online">
                 {onlineServers}
               </span>
               <span className="text-lg font-bold text-secondary"> / </span>
@@ -178,7 +176,9 @@ const MasterPanel: React.FC = () => {
           </div>
           <div
             className="bg-surface-secondary backdrop-blur-md border border-default p-2 rounded cursor-pointer hover:bg-accent-hover hover:border-accent transition-all group"
-            onClick={() => { console.log("click click");  navigate({ to: GlobalRoute.to })}}
+            onClick={() => {
+              navigate({ to: GlobalRoute.to });
+            }}
           >
             <div className="text-secondary text-xs flex group-hover:text-accent items-center justify-center gap-1">
               Total Players
@@ -223,14 +223,11 @@ const MasterPanel: React.FC = () => {
       <div className="p-4 border-b border-subtle shrink-0">
         {/* Search Bar */}
         <div className="mb-3">
-          <SearchBar
-            onSearchValueChange={setSearchTerm}
-            value={searchTerm}
-          />
+          <SearchBar onSearchValueChange={setSearchTerm} value={searchTerm} />
         </div>
 
         {/* Control Buttons */}
-        <div className="flex flex-wrap gap-2 mb-3">
+        <div className="flex flex-wrap gap-2">
           <Tooltip
             content={
               isGrouped
@@ -239,7 +236,7 @@ const MasterPanel: React.FC = () => {
             }
             position="top"
             delay={300}
-            className="flex-1 min-w-0"
+            className="flex-1"
           >
             <ToggleButton
               isActive={isGrouped}
@@ -258,7 +255,7 @@ const MasterPanel: React.FC = () => {
             }
             position="top"
             delay={300}
-            className="flex-1 min-w-0"
+            className="flex-1"
           >
             <ToggleButton
               isActive={hideInactiveEnabled}
@@ -303,8 +300,7 @@ const MasterPanel: React.FC = () => {
             {isGrouped ? (
               Object.entries(processedServerGroups).map(
                 ([groupName, servers]) => {
-                  const groupId =
-                    servers.length > 0 ? servers[0].groupId : 0;
+                  const groupId = servers.length > 0 ? servers[0].groupId : 0;
                   const isNetworkSelected = selectedNetworkId === groupId;
                   return (
                     <ServerGroup
@@ -318,7 +314,7 @@ const MasterPanel: React.FC = () => {
                       selectedServerId={selectedServerId}
                     />
                   );
-                }
+                },
               )
             ) : (
               <FlatServerList
@@ -344,22 +340,22 @@ const MasterPanel: React.FC = () => {
               {COMMIT}
             </a>
           </span>
-          <a 
+          <a
             href={SOURCE}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1 hover:text-accent transition-colors"
             title="View source on GitHub"
           >
-            <svg 
-              xmlns="http://www.w3.org/2000/svg" 
-              width="14" 
-              height="14" 
-              fill="currentColor" 
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              fill="currentColor"
               viewBox="0 0 16 16"
               className="hover:scale-110 transition-transform"
             >
-              <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8"/>
+              <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8" />
             </svg>
             <span>Source</span>
           </a>
