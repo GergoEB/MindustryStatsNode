@@ -169,3 +169,10 @@ body {
 @utility border-status-offline {
   border-color: var(--color-status-offline-border, rgba(239, 68, 68, 0.3));
 }
+
+@utility focus-ring-accent {
+  &:focus {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+  }
+}
