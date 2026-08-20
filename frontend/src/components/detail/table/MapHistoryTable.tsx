@@ -105,39 +105,33 @@ const MapHistoryTable: React.FC<{ mapHistory: ServerMapData[] }> = ({
               <tbody className="bg-surface-primary divide-y divide-subtle">
                 {paginatedHistory.map((item, index) => (
                   <tr
-                    key={item.id || index}
+                    key={item.id}
                     className="hover:bg-accent-muted transition-colors border-default"
                   >
                     <td
-                      className={`px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium ${
+                      className={`px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium user-select-text ${
                         hasMapChanged(item, index)
                           ? "text-accent bg-accent-muted"
                           : "text-primary"
                       }`}
                     >
-                      <div className="break-words max-w-[100px] sm:max-w-none">
-                        {String(removeColors(item.mapName))}
+                      <div className="wrap-break-word max-w-25 sm:max-w-none">
+                        {String(removeColors(item.mapName) + (hasMapChanged(item, index) ? " ●" : ""))}
                       </div>
-                      {hasMapChanged(item, index) && (
-                        <span className="ml-1 text-xs text-accent">●</span>
-                      )}
                       <div className="text-xs text-tertiary mt-1 sm:hidden">
                         {formatDateTimeHuman(item.validFrom)}
                       </div>
                     </td>
                     <td
-                      className={`px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm ${
+                      className={`px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm user-select-text ${
                         hasModeChanged(item, index)
                           ? "text-accent bg-accent-muted"
                           : "text-secondary"
                       }`}
                     >
-                      {getModeName(item.modeName, item.gameMode)}
-                      {hasModeChanged(item, index) && (
-                        <span className="ml-1 text-xs text-accent">●</span>
-                      )}
+                      {getModeName(item.modeName, item.gameMode) + (hasModeChanged(item, index) ? " ●" : "")}
                     </td>
-                    <td className="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm text-tertiary hidden sm:table-cell">
+                    <td className="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm text-tertiary hidden sm:table-cell user-select-text">
                       {formatDateTimeHuman(item.validFrom)} -{" "}
                       {item.validTo
                         ? formatDateTimeHuman(item.validTo)

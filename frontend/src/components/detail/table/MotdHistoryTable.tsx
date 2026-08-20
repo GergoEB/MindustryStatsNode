@@ -109,46 +109,37 @@ const MotdHistoryTable: React.FC<{ motdHistory: ServerMotdData[] }> = ({
               <tbody className="bg-surface-primary divide-y divide-subtle">
                 {paginatedHistory.map((item, index) => (
                   <tr
-                    key={item.id || index}
+                    key={item.id}
                     className="hover:bg-accent-muted transition-colors border-default"
                   >
                     <td
-                      className={`px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium ${
+                      className={`px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium user-select-text ${
                         hasNameChanged(item, index)
                           ? "text-accent bg-accent-muted"
                           : "text-primary"
                       }`}
                     >
-                      <div className="break-words max-w-[120px] sm:max-w-none">
-                        {String(removeColors(item.serverName))}
-                      </div>
-                      {hasNameChanged(item, index) && (
-                        <span className="ml-1 text-xs text-accent">●</span>
-                      )}
-                      <div className="text-xs text-tertiary mt-1 lg:hidden">
-                        {formatDateTimeHuman(item.validFrom)}
+                      <div className="wrap-break-word max-w-30 sm:max-w-none">
+                        {String(removeColors(item.serverName) + (hasNameChanged(item, index) ? " ●" : ""))}
                       </div>
                       <div
-                        className="text-xs text-tertiary mt-1 truncate max-w-[120px] sm:hidden"
+                        className="text-xs text-tertiary mt-1 truncate max-w-30 sm:hidden"
                         title={String(removeColors(item.description))}
                       >
                         {String(removeColors(item.description))}
                       </div>
                     </td>
                     <td
-                      className={`px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm max-w-[200px] truncate hidden sm:table-cell ${
+                      className={`px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm max-w-50 truncate hidden sm:table-cell user-select-text ${
                         hasDescriptionChanged(item, index)
                           ? "text-accent bg-accent-muted"
                           : "text-secondary"
                       }`}
                       title={String(removeColors(item.description))}
                     >
-                      {String(removeColors(item.description))}
-                      {hasDescriptionChanged(item, index) && (
-                        <span className="ml-1 text-xs text-accent">●</span>
-                      )}
+                      {String(removeColors(item.description) + (hasDescriptionChanged(item, index) ? " ●" : ""))}
                     </td>
-                    <td className="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm text-tertiary hidden lg:table-cell">
+                    <td className="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm text-tertiary hidden lg:table-cell user-select-text">
                       {formatDateTimeHuman(item.validFrom)} -{" "}
                       {item.validTo
                         ? formatDateTimeHuman(item.validTo)
