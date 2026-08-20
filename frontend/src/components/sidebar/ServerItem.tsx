@@ -19,7 +19,7 @@ const ServerItem: React.FC<{
 
   return (
     <div
-      className={`p-3 cursor-pointer transition-colors flex items-center justify-between ${
+      className={`p-4 cursor-pointer transition-colors flex items-start justify-between ${
         isSelected
           ? "bg-accent-muted border-l-4 border-default"
           : "hover:bg-accent-hover border-default"
