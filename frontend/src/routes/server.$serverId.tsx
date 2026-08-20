@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { EmptyState } from "../components/detail/EmptyState.tsx";
 import ServerDetail from "../components/detail/ServerDetail.tsx";
 import { getBaseUrl } from "../util/getApi.ts";
+import { DetailShell } from "../components/sidebar/DetailShell.tsx";
 
 export const Route = createFileRoute("/server/$serverId")({
   component: ServerComponent,
@@ -34,13 +35,17 @@ export const Route = createFileRoute("/server/$serverId")({
 
 function ServerComponent() {
   const { serverDataElement, error } = Route.useLoaderData();
-  return serverDataElement ? (
-    <ServerDetail serverDataElement={serverDataElement} />
-  ) : (
-    <EmptyState
-      title="Select a Server or Network"
-      message="Server not found"
-      error={error}
-    />
+  return (
+    <DetailShell title="Server Details">
+      {serverDataElement ? (
+        <ServerDetail serverDataElement={serverDataElement} />
+      ) : (
+        <EmptyState
+          title="Select a Server or Network"
+          message="Server not found"
+          error={error}
+        />
+      )}
+    </DetailShell>
   );
 }
