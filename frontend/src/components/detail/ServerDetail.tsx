@@ -45,25 +45,26 @@ const ServerDetail: React.FC<{ serverDataElement: ServerDetails & ServerElement 
                   {String(removeColors(serverData.description))}
                 </p>
               )}
-              <div className="flex flex-wrap items-center gap-2 sm:gap-4">
-                <span
-                  className={`${statusClass} text-xs sm:text-sm px-2 sm:px-3 py-1 rounded border backdrop-blur-sm`}
-                >
-                  {serverStatus}
-                </span>
-                {serverDataElement.online && serverData && (
-                  <>
-                    <span className="text-xs sm:text-sm text-tertiary">
-                      {serverData.players}/{serverData.playerLimit} players
-                    </span>
-                    <span className="text-xs sm:text-sm text-tertiary">
-                      {serverData.ping}ms
-                    </span>
-                  </>
-                )}
-              </div>
+
               {/* Action buttons */}
               <div className="flex flex-wrap gap-2 mt-3">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+                  <span
+                    className={`${statusClass} text-xs sm:text-sm px-2 sm:px-3 py-1 rounded border backdrop-blur-sm`}
+                  >
+                    {serverStatus}
+                  </span>
+                  {serverDataElement.online && serverData && (
+                    <>
+                      <span className="text-xs sm:text-sm text-tertiary">
+                        {serverData.players}/{serverData.playerLimit} players
+                      </span>
+                      <span className="text-xs sm:text-sm text-tertiary">
+                        {serverData.ping}ms
+                      </span>
+                    </>
+                  )}
+                </div>
                 <CopyButton
                   text={`${serverDataElement.host}:${serverDataElement.port}`}
                   className="button-secondary text-xs sm:text-sm px-2 sm:px-3 py-1"
