@@ -33,27 +33,27 @@ export const ChartSidebarLegend: React.FC<ChartSidebarLegendProps> = ({
     };
 
     return (
-        <div className="flex flex-col h-full text-sm text-neutral-200">
+        <div className="flex flex-col h-full text-sm text-primary">
             <div className="mb-2.5">
                 <input
                     type="text"
                     placeholder="Search gamemodes..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-neutral-900 border border-neutral-800 rounded px-3 py-1.5 text-xs text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-orange-500/40 transition-colors"
+                    className="w-full bg-surface-secondary border border-default rounded px-3 py-1.5 text-xs text-primary placeholder:text-tertiary focus:outline-none focus:border-accent transition-colors"
                 />
             </div>
 
             <div className="flex gap-2 mb-3 text-[11px]">
                 <button
                     onClick={() => onChange(new Set(gamemodes))}
-                    className="flex-1 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 rounded py-1 text-neutral-400 hover:text-neutral-200 font-medium transition-colors"
+                    className="button-secondary flex-1 py-1 font-medium"
                 >
                     Select All
                 </button>
                 <button
                     onClick={() => onChange(new Set())}
-                    className="flex-1 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 rounded py-1 text-neutral-400 hover:text-neutral-200 font-medium transition-colors"
+                    className="button-secondary flex-1 py-1 font-medium"
                 >
                     Clear All
                 </button>
@@ -61,7 +61,7 @@ export const ChartSidebarLegend: React.FC<ChartSidebarLegendProps> = ({
 
             <div className="flex-1 overflow-y-auto pr-1 space-y-1 custom-scrollbar max-h-[260px] lg:max-h-none">
                 {filteredModes.length === 0 ? (
-                    <div className="text-center text-xs text-neutral-500 py-6">
+                    <div className="text-center text-xs text-tertiary py-6">
                         No matching gamemodes found
                     </div>
                 ) : (
@@ -73,10 +73,10 @@ export const ChartSidebarLegend: React.FC<ChartSidebarLegendProps> = ({
                         return (
                             <label
                                 key={mode}
-                                className={`flex items-center justify-between px-2.5 py-1.5 rounded border cursor-pointer select-none transition-all ${
+                                className={`flex items-center justify-between px-2.5 py-1.5 rounded cursor-pointer select-none transition-all ${
                                     isChecked
-                                        ? "bg-neutral-800/10 border-neutral-700/40 text-neutral-100"
-                                        : "bg-transparent border-transparent text-neutral-500 hover:bg-neutral-900/50 hover:text-neutral-300"
+                                        ? "bg-accent-muted border border-accent text-primary"
+                                        : "bg-transparent border border-transparent text-tertiary hover:bg-surface-secondary hover:text-secondary"
                                 }`}
                             >
                                 <div className="flex items-center gap-2.5 min-w-0">
@@ -84,7 +84,7 @@ export const ChartSidebarLegend: React.FC<ChartSidebarLegendProps> = ({
                                         type="checkbox"
                                         checked={isChecked}
                                         onChange={() => toggleMode(mode)}
-                                        className="accent-orange-500 h-3.5 w-3.5 rounded border-neutral-700 bg-neutral-900 text-orange-500 focus:ring-0"
+                                        className="accent-amber-500 h-3.5 w-3.5 rounded border-default bg-surface-primary text-accent focus:ring-0"
                                     />
                                     <span
                                         className="w-2 h-2 rounded shrink-0 animate-pulse"
@@ -92,7 +92,7 @@ export const ChartSidebarLegend: React.FC<ChartSidebarLegendProps> = ({
                                     />
                                     <span className="truncate text-xs font-semibold">{mode}</span>
                                 </div>
-                                <span className="text-[10px] font-mono text-neutral-400 shrink-0 bg-neutral-900/60 px-1.5 py-0.5 rounded border border-neutral-800/40">
+                                <span className="text-[10px] font-mono text-secondary shrink-0 bg-surface-tertiary px-1.5 py-0.5 rounded border border-subtle">
                                   {peak.toLocaleString()}
                                 </span>
                             </label>

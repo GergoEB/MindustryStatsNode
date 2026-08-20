@@ -165,18 +165,18 @@ export const GamemodeChart: React.FC<GamemodeChartProps> = ({
             </div>
 
             {loading && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-neutral-900/10 z-20">
-                    <div className="animate-spin rounded h-7 w-7 border-2 border-orange-500 border-t-transparent" />
-                    <span className="text-xs text-neutral-400 font-medium tracking-wide animate-pulse">
-            Compiling...
-          </span>
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-surface-primary/50 z-20">
+                  <div className="animate-spin rounded h-7 w-7 border-2 border-accent border-t-transparent" />
+                    <span className="text-xs text-secondary font-medium tracking-wide animate-pulse">
+                    Loading...
+                  </span>
                 </div>
             )}
 
             {error && (
-                <div className="absolute inset-0 flex items-center justify-center text-red-400 text-xs font-semibold z-20">
-                    {error}
-                </div>
+              <div className="absolute inset-0 flex items-center justify-center text-status-offline text-xs font-semibold z-20">
+                {error}
+              </div>
             )}
         </div>
     );

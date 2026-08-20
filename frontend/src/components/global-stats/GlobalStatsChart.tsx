@@ -71,13 +71,13 @@ const GlobalStatsChart: React.FC = () => {
   }, [sortedServerGroups]);
 
   return (
-      <div className="h-full overflow-auto p-6 space-y-5 text-neutral-100 custom-scrollbar">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-neutral-900 pb-4">
+      <div className="h-full overflow-auto p-6 space-y-5 text-primary custom-scrollbar bg-surface-primary">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-subtle pb-4">
           <div>
-            <h1 className="text-xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-amber-500">
+            <h1 className="text-xl font-black tracking-tight text-accent">
               Global Stats
             </h1>
-            <p className="text-[11px] text-neutral-500 font-medium">
+            <p className="text-[11px] text-tertiary font-medium">
               Automated cluster network telemetry logging maps
             </p>
           </div>
@@ -94,33 +94,33 @@ const GlobalStatsChart: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="bg-neutral-800 border-neutral-800 border rounded p-4 flex items-center justify-between shadow-sm">
+          <div className="card-base p-4 flex items-center justify-between shadow-sm">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-tertiary">
                 Period Peak High
               </p>
-              <h3 className="text-xl font-black text-amber-500 mt-0.5 tracking-tight">
+              <h3 className="text-xl font-black text-accent mt-0.5 tracking-tight">
                 {loading ? "..." : (peakPlayers?.toLocaleString() ?? "0")}
               </h3>
             </div>
-            <div className="p-2 bg-amber-500/10 text-amber-500 rounded">
+            <div className="p-2 bg-accent-muted text-accent rounded border border-accent">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
               </svg>
             </div>
           </div>
 
-          <div className="bg-neutral-800 border-neutral-800/50 border rounded p-4 flex items-center justify-between shadow-sm">
+          <div className="card-base p-4 flex items-center justify-between shadow-sm">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-tertiary">
                 Tracked Gamemodes
               </p>
-              <h3 className="text-xl font-black text-blue-400 mt-0.5 tracking-tight">
+              <h3 className="text-xl font-black text-primary mt-0.5 tracking-tight">
                 {gamemodeList?.length ?? 0}{" "}
-                <span className="text-xs text-neutral-500 font-normal">modes</span>
+                <span className="text-xs text-tertiary font-normal">modes</span>
               </h3>
             </div>
-            <div className="p-2 bg-blue-500/10 text-blue-400 rounded">
+            <div className="p-2 bg-surface-tertiary text-secondary rounded border border-default">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
@@ -129,9 +129,9 @@ const GlobalStatsChart: React.FC = () => {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-5 items-stretch w-full min-h-115 h-[60vh]">
-          <div className="flex-1 border border-neutral-800/50 rounded p-4 bg-neutral-900 flex flex-col min-h-85 lg:min-h-0">
+          <div className="flex-1 card-base p-4 flex flex-col min-h-85 lg:min-h-0">
             <div className="mb-3">
-              <h4 className="text-neutral-400">
+              <h4 className="text-secondary font-medium">
                 {viewMode === "lines" ? "Playercounts by Gamemode" : "Aggregated Global Playercounts"}
               </h4>
             </div>
@@ -148,9 +148,9 @@ const GlobalStatsChart: React.FC = () => {
           </div>
 
           {viewMode === "lines" && (
-              <div className="w-full lg:w-76 shrink-0 border border-neutral-800/50 rounded p-4 bg-neutral-900 flex flex-col overflow-hidden">
+              <div className="w-full lg:w-76 shrink-0 card-base p-4 flex flex-col overflow-hidden">
                 <div className="mb-3">
-                  <h4 className="font-bold text-orange-400/80">
+                  <h4 className="font-bold text-accent">
                     Gamemodes
                   </h4>
                 </div>
@@ -168,11 +168,11 @@ const GlobalStatsChart: React.FC = () => {
 
         {selectedGamemode && (
             <div className="flex flex-col lg:flex-row gap-5 items-stretch w-full min-h-115 h-[60vh]">
-              <div className="flex-1 border border-neutral-800/50 rounded p-4 bg-neutral-900 flex flex-col min-h-85 lg:min-h-0">
+              <div className="flex-1 card-base p-4 flex flex-col min-h-85 lg:min-h-0">
                 <div className="mb-3">
-                  <h4 className="text-[10px] font-black text-neutral-400 uppercase tracking-widest flex items-center gap-2">
+                  <h4 className="text-[10px] font-black text-tertiary uppercase tracking-widest flex items-center gap-2">
                     Group Share for {" "}
-                    <span className="text-orange-400 font-black px-1.5 py-0.5 rounded bg-orange-500/5 border border-orange-500/10 text-xs">
+                    <span className="button-accent px-1.5 py-0.5 text-xs">
                     {selectedGamemode}
                   </span>
                   </h4>
@@ -189,9 +189,9 @@ const GlobalStatsChart: React.FC = () => {
                 </div>
               </div>
 
-              <div className="w-full lg:w-76 shrink-0 border border-neutral-800/50 rounded p-4 bg-neutral-900 flex flex-col overflow-hidden">
+              <div className="w-full lg:w-76 shrink-0 card-base p-4 flex flex-col overflow-hidden">
                 <div className="mb-3">
-                  <h4 className="font-bold text-orange-400/80">
+                  <h4 className="font-bold text-accent">
                     Server Groups
                   </h4>
                 </div>
