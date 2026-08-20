@@ -94,7 +94,7 @@ const InactiveServersDetail: React.FC = () => {
                 </thead>
                 <tbody className="divide-y divide-subtle">
                   {inactiveServers.map((server) => (
-                    <tr key={server.id} className="hover:bg-accent-hover transition-colors">
+                    <tr key={server.id} className="hover:bg-accent-hover transition-colors border-default">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-secondary">
                           {server.group_name}
