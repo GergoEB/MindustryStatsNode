@@ -11,7 +11,7 @@ function NetworkComponent() {
   const { networkId } = Route.useParams();
 
   return (
-    <DetailShell title="Network">
+    <DetailShell title="Network Details">
       {networkId != null ? (
         <NetworkDetail networkId={Number(networkId)} />
       ) : (
