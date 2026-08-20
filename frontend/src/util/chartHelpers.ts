@@ -1,5 +1,4 @@
 import { GamemodeHistoryEntry, ServerShareEntry } from "../../../common/models/GlobalStatsTypes.js";
-import { theme } from "../theme.ts";
 
 export type DateRangeOption = "1d" | "7d" | "14d" | "3m" | "12m";
 // Note: Changed from "stacked" to "lines" based on the request to remove stacking
@@ -29,10 +28,10 @@ function stringToColor(str: string): string {
 
 export function getModeColor(modeName: string | null): string {
     if (!modeName) return "#ffffff";
-    const lowerName = modeName.toLowerCase();
-    if (theme?.modeColors?.[lowerName]) {
-        return theme.modeColors[lowerName];
-    }
+    //const lowerName = modeName.toLowerCase();
+    //if (theme?.modeColors?.[lowerName]) {
+    //    return theme.modeColors[lowerName];
+    //}
     return stringToColor(modeName);
 }
 
