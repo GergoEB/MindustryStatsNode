@@ -1,8 +1,7 @@
 import {createLogger} from '../logger.js';
-import {InMemoryCache, InMemoryQueue} from '../utils/in-memory-queue.js';
-import {CACHE_KEYS, CACHE_TTL} from '../shared/constants.js';
+import {InMemoryQueue} from '../utils/in-memory-queue.js';
+import {CACHE_KEYS} from '../shared/constants.js';
 import * as serverRepository from '../repositories/serverRepository.js';
-import { type ServerDetails, type ServerElement} from '../../../common/models/serverData.js';
 import { type ServerProcessorConfig} from '../shared/config.js';
 import { type RawServerData} from './ServerCollectorService.js';
 import {CURRENT_DATA_FRESH_THRESHOLD} from "../const.js";
@@ -17,8 +16,8 @@ export class ServerProcessorService {
   private running = false;
 
   constructor(
-      rawDataQueue: InMemoryQueue<RawServerData>,
-      config: ServerProcessorConfig
+    rawDataQueue: InMemoryQueue<RawServerData>,
+    config: ServerProcessorConfig
   ) {
     this.rawDataQueue = rawDataQueue;
     this.config = config;
@@ -27,6 +26,7 @@ export class ServerProcessorService {
   async initialize(): Promise<void> {
     logger.info('Initializing data storage...');
     const servers = await serverRepository.getAllServerElements(this.config.MAX_HISTORY_HOURS);
+    mindustryApp.serversList.clear();
 
     for (const server of servers) {
       server.online = false;
@@ -146,7 +146,6 @@ export class ServerProcessorService {
     }
 
     try {
-      return;
       logger.debug(`Saving batch of ${batch.length} servers (Stats: ${statsToInsert.length}, MOTDs: ${motdsToUpdate.length}, Maps: ${mapsToUpdate.length})`);
 
       // Run all independent queries in parallel using Promise.all
@@ -159,7 +158,7 @@ export class ServerProcessorService {
       const statsWithRegistryIds = statsToInsert.map(stat => ({
         ...stat,
         motd_registry_id: motdRegistryByServer.get(stat.server_id) ?? null,
-        map_registry_id:  mapRegistryByServer.get(stat.server_id)  ?? null,
+        map_registry_id: mapRegistryByServer.get(stat.server_id) ?? null,
       }));
 
       await serverRepository.bulkSaveServerStats(statsWithRegistryIds);

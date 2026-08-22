@@ -1,5 +1,5 @@
 import {createLogger} from '../logger.js';
-import {InMemoryCache, InMemoryQueue} from '../utils/in-memory-queue.js';
+import {InMemoryQueue} from '../utils/in-memory-queue.js';
 import {CACHE_KEYS, CACHE_TTL} from '../shared/constants.js';
 import {getServerData} from './mindustryService.js';
 import * as serverRepository from '../repositories/serverRepository.js';

@@ -1,5 +1,4 @@
 import {createLogger} from '../logger.js';
-import {InMemoryCache} from '../utils/in-memory-queue.js';
 import * as serverRepository from '../repositories/serverRepository.js';
 import { type ApiServiceConfig} from '../shared/config.js';
 import {Elysia, t} from 'elysia';
@@ -284,7 +283,7 @@ export class ApiService {
 
     this.app.get('/api/servers', async ({set}) => {
       try {
-        const servers = Array.of(mindustryApp.serversList.values());
+        const servers = Array.from(mindustryApp.serversList.values());
         
         if (!servers) {
           set.status = 503;
