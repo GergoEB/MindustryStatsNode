@@ -11,6 +11,7 @@ import {ApiService} from './services/ApiService.js';
 import {initCountryLookup} from './utils/countryLookup.js';
 import os from 'os';
 import {BUILD_DATE, COMMIT, VERSION} from '../../common/version.js';
+import { ServerElement } from '../../common/models/serverData.js';
 
 const logger = createLogger('Main');
 
@@ -35,6 +36,7 @@ export class MindustryStatsApp {
   // Shared resources
   private rawDataQueue!: InMemoryQueue<RawServerData>;
   private cache!: InMemoryCache;
+  public serversList: Map<String, ServerElement> = new Map();
 
   // Cache cleanup interval
   private cacheCleanupInterval?: NodeJS.Timeout;
@@ -88,18 +90,15 @@ export class MindustryStatsApp {
 
       // Initialize shared resources
       this.rawDataQueue = new InMemoryQueue('rawData');
-      this.cache = new InMemoryCache();
 
       // Initialize services
       this.discoveryService = new ServerDiscoveryService(discoveryConfig);
       this.collectorService = new ServerCollectorService(
         this.rawDataQueue,
-        this.cache,
         collectorConfig
       );
       this.processorService = new ServerProcessorService(
         this.rawDataQueue,
-        this.cache,
         processorConfig
       );
       this.apiService = new ApiService(apiConfig);
@@ -127,7 +126,7 @@ export class MindustryStatsApp {
       logger.info('=== All services started successfully ===');
       logger.info(`API & WebSocket Server: http://localhost:${apiConfig.PORT}`);
       logger.info(`Collection Concurrency: ${collectorConfig.COLLECTION_CONCURRENCY}`);
-      logger.info(`Server Count: ${this.processorService.getServerCount()}`);
+      logger.info(`Server Count: ${this.serversList.size}`);
 
     } catch (error) {
       logger.error('Failed to start application:', error);

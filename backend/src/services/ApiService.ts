@@ -7,7 +7,7 @@ import {staticPlugin} from '@elysia/static';
 import http from 'http';
 import path from "path";
 import {BUILD_DATE, buildInfo, COMMIT, VERSION} from "../../../common/version.js";
-import {ServerElement} from "../../../common/models/serverData.js";
+import {ServerDetails, ServerElement} from "../../../common/models/serverData.js";
 import {mindustryApp} from "../index.js";
 import {getAggregatedHistory, getGlobalPlayerHistory, getNetworkPlayerHistory} from "../repositories/StatsRepository.js";
 import {getInactiveServers, getServerListStats} from "../repositories/ServerListRepository.js";
@@ -284,8 +284,8 @@ export class ApiService {
 
     this.app.get('/api/servers', async ({set}) => {
       try {
-        const servers: ServerElement[] = mindustryApp.processorService.getCachedServerElements();
-
+        const servers = Array.of(mindustryApp.serversList.values());
+        
         if (!servers) {
           set.status = 503;
           return { error: 'Server data not available' };

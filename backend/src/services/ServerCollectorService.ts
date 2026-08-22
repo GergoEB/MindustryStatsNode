@@ -31,11 +31,9 @@ export class ServerCollectorService {
 
   constructor(
     rawDataQueue: InMemoryQueue<RawServerData>,
-    cache: InMemoryCache,
     config: ServerCollectorConfig
   ) {
     this.rawDataQueue = rawDataQueue;
-    this.cache = cache;
     this.config = config;
   }
 
@@ -110,8 +108,6 @@ export class ServerCollectorService {
         cacheKey: serverKey,
         serverId: serverId
       };
-
-      await this.cache.set(serverKey, rawData, CACHE_TTL.SERVER_DATA);
 
       await this.rawDataQueue.push(rawData);
 

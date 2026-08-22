@@ -2,27 +2,25 @@ import {createLogger} from '../logger.js';
 import {InMemoryCache, InMemoryQueue} from '../utils/in-memory-queue.js';
 import {CACHE_KEYS, CACHE_TTL} from '../shared/constants.js';
 import * as serverRepository from '../repositories/serverRepository.js';
-import {ServerElement} from '../../../common/models/serverData.js';
+import {ServerDetails, ServerElement} from '../../../common/models/serverData.js';
 import {ServerProcessorConfig} from '../shared/config.js';
 import {RawServerData} from './ServerCollectorService.js';
 import {CURRENT_DATA_FRESH_THRESHOLD} from "../const.js";
+import { mindustryApp } from '../index.js';
 
 const logger = createLogger('ServerProcessor');
 
 export class ServerProcessorService {
   private rawDataQueue: InMemoryQueue<RawServerData>;
-  private cache: InMemoryCache;
   private config: ServerProcessorConfig;
   private processLoop?: NodeJS.Timeout;
   private running = false;
 
   constructor(
       rawDataQueue: InMemoryQueue<RawServerData>,
-      cache: InMemoryCache,
       config: ServerProcessorConfig
   ) {
     this.rawDataQueue = rawDataQueue;
-    this.cache = cache;
     this.config = config;
   }
 
@@ -33,10 +31,10 @@ export class ServerProcessorService {
     for (const server of servers) {
       server.online = false;
       if (server.currentData) server.currentData.online = false;
-      this.cache.set(CACHE_KEYS.SERVER_DATA(server.id), server);
+      mindustryApp.serversList.set(CACHE_KEYS.SERVER_DATA(server.id), server);
     }
 
-    logger.info(`Initialized data storage with ${this.cache.quickSize()} servers`);
+    logger.info(`Initialized data storage with ${mindustryApp.serversList.size} servers`);
   }
 
   async start(): Promise<void> {
@@ -71,17 +69,20 @@ export class ServerProcessorService {
     const mapsToUpdate: any[] = [];
     const onlineServerIds: number[] = [];
 
+    // Only once not every iteration
+    const freshThresholdOldest = new Date(Date.now() - CURRENT_DATA_FRESH_THRESHOLD).getTime();
+
     // Process memory states and prepare DB payloads
     for (const rawData of batch) {
       const { data, timestamp, online, cacheKey, serverId: rawId } = rawData;
-      let serverEntry = await this.cache.get(cacheKey);
+      let serverEntry = mindustryApp.serversList.get(cacheKey);
 
       if (serverEntry == null) {
         serverEntry = await serverRepository.getServer(rawId)
 
         // This should never happen, can only really be caused by a bug or memory corruption
         if (!serverEntry) {
-          logger.error(`Error in processing server entry, failed to acquire server data: ${rawId}`);
+          logger.error(`Error in processing server entry, failed to acquire server data: ${rawId} / ${rawData.host}:${rawData.port}`);
           continue;
         }
       }
@@ -122,6 +123,7 @@ export class ServerProcessorService {
         serverEntry.lastSeen = timestamp;
         serverEntry.online = true;
         serverEntry.consecutiveFailures = 0;
+        
       } else {
         // Handle offline server state
         serverEntry.online = false;
@@ -129,8 +131,7 @@ export class ServerProcessorService {
         serverEntry.consecutiveFailures = (serverEntry.consecutiveFailures || 0) + 1;
 
         // Invalidate current data if not seen for a while
-        if (serverEntry.lastSeen != null &&
-            serverEntry.lastSeen > new Date(Date.now() - CURRENT_DATA_FRESH_THRESHOLD).getTime()) {
+        if (serverEntry.lastSeen != null && serverEntry.lastSeen < freshThresholdOldest) {
           serverEntry.currentData = undefined;
         }
 
@@ -141,11 +142,11 @@ export class ServerProcessorService {
         });
       }
 
-      // Cache update & pubsub for each server (keeps realtime responsive)
-      await this.cache.set(cacheKey, serverEntry, CACHE_TTL.SERVER_DATA);
+      mindustryApp.serversList.set(cacheKey, serverEntry)
     }
 
     try {
+      return;
       logger.debug(`Saving batch of ${batch.length} servers (Stats: ${statsToInsert.length}, MOTDs: ${motdsToUpdate.length}, Maps: ${mapsToUpdate.length})`);
 
       // Run all independent queries in parallel using Promise.all
@@ -167,13 +168,6 @@ export class ServerProcessorService {
     } catch (error) {
       logger.error('Database batch write failed:', (error as Error).message);
     }
-  }
-
-  /**
-   * Update the comprehensive server cache (public for shutdown)
-   */
-  getCachedServerElements(): ServerElement[] {
-    return this.cache.getValues();
   }
 
   getServerCount(): number {
