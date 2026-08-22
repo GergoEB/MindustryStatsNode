@@ -116,9 +116,6 @@ export class MindustryStatsApp {
       // Start the shared HTTP server
       await this.apiService.listen();
 
-      // Start periodic cache cleanup
-      this.startCacheCleanup();
-
       // Setup graceful shutdown
       this.setupShutdownHandlers();
 
