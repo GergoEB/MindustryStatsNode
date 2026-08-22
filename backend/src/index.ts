@@ -2,7 +2,7 @@
 
 import {createLogger} from './logger.js';
 import {initDatabase} from './config/database.js';
-import {InMemoryCache, InMemoryQueue} from './utils/in-memory-queue.js';
+import {InMemoryQueue} from './utils/in-memory-queue.js';
 import {loadBaseConfig} from './shared/config.js';
 import {ServerDiscoveryService} from './services/ServerDiscoveryService.js';
 import { type RawServerData, ServerCollectorService} from './services/ServerCollectorService.js';
@@ -35,8 +35,7 @@ export class MindustryStatsApp {
 
   // Shared resources
   private rawDataQueue!: InMemoryQueue<RawServerData>;
-  private cache!: InMemoryCache;
-  public serversList: Map<String, ServerElement> = new Map();
+  public serversList: Map<string, ServerElement> = new Map();
 
   // Cache cleanup interval
   private cacheCleanupInterval?: NodeJS.Timeout;
@@ -132,15 +131,6 @@ export class MindustryStatsApp {
       logger.error('Failed to start application:', error);
       process.exit(1);
     }
-  }
-
-  /**
-   * Start periodic cache cleanup
-   */
-  private startCacheCleanup(): void {
-    this.cacheCleanupInterval = setInterval(() => {
-      this.cache.cleanupExpired();
-    }, 60000); // Clean up every minute
   }
 
   /**
