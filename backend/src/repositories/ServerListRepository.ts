@@ -7,7 +7,7 @@
 import sequelize from '../config/database.js';
 import { Server, ServerList, ServerSourceList } from '../models/index.js';
 import { QueryTypes } from 'sequelize';
-import {InactiveServerInfo, ServerListStats} from "../../../common/models/RepositoryTypes.js"
+import { type InactiveServerInfo, type ServerListStats} from "../../../common/models/RepositoryTypes.js"
 
 // ─── Serverlist CRUD ──────────────────────────────────────────────────────────
 

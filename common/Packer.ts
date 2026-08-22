@@ -16,7 +16,7 @@ export class ApiPacker {
         }
 
         // Dynamically iterate keys from the first object
-        const keys = Object.keys(data[0]) as Array<keyof T>;
+        const keys = Object.keys(data[0]!) as Array<keyof T>;
 
         // Map objects to arrays of values matching the key order
         const values = data.map(item =>

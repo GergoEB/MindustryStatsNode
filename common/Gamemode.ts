@@ -14,7 +14,7 @@ export function getModeName(mode_name: string | null, mode_int: number): string 
 
 export function getVanillaModeName(mode_int: number): string {
     if (mode_int === null) return "Unknown";
-    return ['Survival', 'Sandbox', 'Attack', 'PvP', 'Editor'][mode_int]
+    return ['Survival', 'Sandbox', 'Attack', 'PvP', 'Editor'][mode_int] || "Unknown";
 }
 
 const modeMap: Record<string, number> = {

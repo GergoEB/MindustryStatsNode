@@ -3,9 +3,9 @@ import {InMemoryCache, InMemoryQueue} from '../utils/in-memory-queue.js';
 import {CACHE_KEYS, CACHE_TTL} from '../shared/constants.js';
 import {getServerData} from './mindustryService.js';
 import * as serverRepository from '../repositories/serverRepository.js';
-import {ServerRecord} from '../../../common/models/RepositoryTypes.js';
-import {ServerData} from '../../../common/models/serverData.js';
-import {ServerCollectorConfig} from '../shared/config.js';
+import { type ServerRecord} from '../../../common/models/RepositoryTypes.js';
+import { type ServerData} from '../../../common/models/serverData.js';
+import { type ServerCollectorConfig} from '../shared/config.js';
 
 const logger = createLogger('ServerCollector');
 
@@ -23,7 +23,6 @@ export interface RawServerData {
 
 export class ServerCollectorService {
   private rawDataQueue: InMemoryQueue<RawServerData>;
-  private cache: InMemoryCache;
   private config: ServerCollectorConfig;
   private serverCollectInterval?: NodeJS.Timeout;
   private collectionQueue: any;

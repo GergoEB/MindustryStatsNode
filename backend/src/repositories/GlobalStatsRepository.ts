@@ -1,6 +1,6 @@
 import sequelize from '../config/database.js';
 import { QueryTypes } from 'sequelize';
-import { GamemodeHistoryEntry, GamemodeInfo, ServerShareEntry } from '../../../common/models/GlobalStatsTypes.js';
+import { type GamemodeHistoryEntry, type GamemodeInfo, type ServerShareEntry } from '../../../common/models/GlobalStatsTypes.js';
 import {removeColorsFromMindustry} from "../../../common/Mindustry.js";
 import { MAX_REALISTIC_PLAYERCOUNT } from '../const.js';
 import {getModeName, getVanillaModeName, modeNameToIntOrNull} from "../../../common/Gamemode.js";

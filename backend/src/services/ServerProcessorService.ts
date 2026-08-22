@@ -2,9 +2,9 @@ import {createLogger} from '../logger.js';
 import {InMemoryCache, InMemoryQueue} from '../utils/in-memory-queue.js';
 import {CACHE_KEYS, CACHE_TTL} from '../shared/constants.js';
 import * as serverRepository from '../repositories/serverRepository.js';
-import {ServerDetails, ServerElement} from '../../../common/models/serverData.js';
-import {ServerProcessorConfig} from '../shared/config.js';
-import {RawServerData} from './ServerCollectorService.js';
+import { type ServerDetails, type ServerElement} from '../../../common/models/serverData.js';
+import { type ServerProcessorConfig} from '../shared/config.js';
+import { type RawServerData} from './ServerCollectorService.js';
 import {CURRENT_DATA_FRESH_THRESHOLD} from "../const.js";
 import { mindustryApp } from '../index.js';
 
@@ -168,9 +168,5 @@ export class ServerProcessorService {
     } catch (error) {
       logger.error('Database batch write failed:', (error as Error).message);
     }
-  }
-
-  getServerCount(): number {
-    return this.cache.quickSize();
   }
 }

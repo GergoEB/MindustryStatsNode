@@ -5,7 +5,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import sequelize from '../config/database.js';
-import { ServerHistory } from '../../../common/models/serverData.js';
+import { type ServerHistory } from '../../../common/models/serverData.js';
 import { QueryTypes } from 'sequelize';
 import { MAX_REALISTIC_PLAYERCOUNT } from '../const.js';
 

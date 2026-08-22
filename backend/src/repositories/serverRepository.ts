@@ -15,17 +15,17 @@ import {
 } from '../models/index.js';
 import {
     GameMode,
-    ServerDetails,
-    ServerElement,
-    ServerMapData,
-    ServerMotdData,
+    type ServerDetails,
+    type ServerElement,
+    type ServerMapData,
+    type ServerMotdData,
 } from '../../../common/models/serverData.js';
 import { createLogger } from '../logger.js';
 import { Op, QueryTypes, Transaction } from 'sequelize';
 import {
-    NetworkDetails,
-    ServerInput,
-    ServerRecord,
+    type NetworkDetails,
+    type ServerInput,
+    type ServerRecord,
 } from '../../../common/models/RepositoryTypes.js';
 import {CURRENT_DATA_FRESH_THRESHOLD, MAX_REALISTIC_PLAYERCOUNT} from "../const.js";
 

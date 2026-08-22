@@ -1,6 +1,6 @@
 import dgram from 'dgram';
 import dns from 'dns/promises';
-import {GameMode, ServerData} from '../../../common/models/serverData.js';
+import {GameMode, type ServerData} from '../../../common/models/serverData.js';
 import {readString} from '../utils/buffer.js';
 import {MINDUSTRY_TIMEOUT_MILLISECONDS} from '../const.js';
 import {createLogger} from '../logger.js';
@@ -136,7 +136,7 @@ export async function getServerData(host: string, port: number | string, serverK
 
         const versionType = readString(buffer, offset);
 
-        const gameModeIdx = buffer[offset.value] & 0xFF; offset.value += 1;
+        const gameModeIdx = buffer[offset.value]! & 0xFF; offset.value += 1;
         const mode = gameModeIdx < Object.keys(GameMode).length / 2 ? (gameModeIdx as GameMode) : GameMode.SURVIVAL;
 
         const playerLimit = buffer.readInt32BE(offset.value); offset.value += 4;
@@ -158,7 +158,7 @@ export async function getServerData(host: string, port: number | string, serverK
           mode,
           playerLimit,
           description,
-          modeName,
+          modeName: modeName || null,
           online: true,
           countryCode: lookupCountryFromIPSync(ipAddress)
         });

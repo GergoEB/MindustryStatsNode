@@ -1,7 +1,7 @@
 import {createLogger} from '../logger.js';
 import * as serverRepository from '../repositories/serverRepository.js';
-import {ServerListElement} from '../models/ServerListElement.js';
-import {ServerDiscoveryConfig} from '../shared/config.js';
+import { type ServerListElement} from '../models/ServerListElement.js';
+import { type ServerDiscoveryConfig} from '../shared/config.js';
 import {getAllServerLists, refreshServerSourceList} from "../repositories/ServerListRepository.js";
 
 const logger = createLogger('ServerDiscovery');
@@ -69,7 +69,7 @@ export class ServerDiscoveryService {
           continue;
         }
 
-        const servers: ServerListElement[] = await response.json();
+        const servers = await response.json() as ServerListElement[];
         groupsCount += servers.length;
 
         for (const serverGroup of servers) {
@@ -78,9 +78,10 @@ export class ServerDiscoveryService {
             let port: number;
 
             if (address.includes(':')) {
+              // todo something more beter?
               const [hostPart, portPart] = address.split(':');
-              host = hostPart.trim();
-              port = parseInt(portPart) || 6567;
+              host = hostPart!.trim();
+              port = parseInt(portPart!) || 6567;
             } else {
               host = address.trim();
               port = 6567;

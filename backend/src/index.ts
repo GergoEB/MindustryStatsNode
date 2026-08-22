@@ -5,13 +5,13 @@ import {initDatabase} from './config/database.js';
 import {InMemoryCache, InMemoryQueue} from './utils/in-memory-queue.js';
 import {loadBaseConfig} from './shared/config.js';
 import {ServerDiscoveryService} from './services/ServerDiscoveryService.js';
-import {RawServerData, ServerCollectorService} from './services/ServerCollectorService.js';
+import { type RawServerData, ServerCollectorService} from './services/ServerCollectorService.js';
 import {ServerProcessorService} from './services/ServerProcessorService.js';
 import {ApiService} from './services/ApiService.js';
 import {initCountryLookup} from './utils/countryLookup.js';
 import os from 'os';
 import {BUILD_DATE, COMMIT, VERSION} from '../../common/version.js';
-import { ServerElement } from '../../common/models/serverData.js';
+import { type ServerElement } from '../../common/models/serverData.js';
 
 const logger = createLogger('Main');
 
