@@ -13,7 +13,6 @@ export class ServerProcessorService {
   private rawDataQueue: InMemoryQueue<RawServerData>;
   private cache: InMemoryCache;
   private config: ServerProcessorConfig;
-  public serverDataCache: Map<string, ServerElement> = new Map();
   private processLoop?: NodeJS.Timeout;
   private running = false;
 
@@ -30,16 +29,14 @@ export class ServerProcessorService {
   async initialize(): Promise<void> {
     logger.info('Initializing data storage...');
     const servers = await serverRepository.getAllServerElements(this.config.MAX_HISTORY_HOURS);
-    this.serverDataCache.clear();
 
     for (const server of servers) {
       server.online = false;
       if (server.currentData) server.currentData.online = false;
-      this.serverDataCache.set(CACHE_KEYS.SERVER_DATA(server.id), server);
+      this.cache.set(CACHE_KEYS.SERVER_DATA(server.id), server);
     }
 
-    await this.cache.set(CACHE_KEYS.ALL_SERVERS, Array.from(this.serverDataCache.values()), CACHE_TTL.ALL_SERVERS);
-    logger.info(`Initialized data storage with ${this.serverDataCache.size} servers`);
+    logger.info(`Initialized data storage with ${this.cache.quickSize()} servers`);
   }
 
   async start(): Promise<void> {
@@ -76,26 +73,23 @@ export class ServerProcessorService {
 
     // Process memory states and prepare DB payloads
     for (const rawData of batch) {
-      const { host, port, data, timestamp, online, cacheKey } = rawData;
-      let serverEntry = this.serverDataCache.get(cacheKey);
+      const { data, timestamp, online, cacheKey, serverId: rawId } = rawData;
+      let serverEntry = await this.cache.get(cacheKey);
 
       if (serverEntry == null) {
-        serverEntry = await serverRepository.getServer(rawData.serverId)
+        serverEntry = await serverRepository.getServer(rawId)
 
         // This should never happen, can only really be caused by a bug or memory corruption
         if (!serverEntry) {
-          logger.error(`Error in processing server entry, failed to acquire server data: ${rawData.serverId}`);
+          logger.error(`Error in processing server entry, failed to acquire server data: ${rawId}`);
           continue;
         }
       }
 
       if (data != null && online) {
-        // Compare new data against our memory cache to see if MOTD/Map ACTUALLY changed
-        const currentData = serverEntry.currentData;
-
         // Queue up MOTD update only if changed
         motdsToUpdate.push({
-          server_id: serverEntry.id,
+          server_id: rawId,
           server_name: data.serverName,
           description: data.description,
           mode_name: data.modeName
@@ -103,14 +97,14 @@ export class ServerProcessorService {
 
         // Queue up Map update only if changed
         mapsToUpdate.push({
-          server_id: serverEntry.id,
+          server_id: rawId,
           map_name: data.mapName,
           game_mode: data.mode
         });
 
         // Always queue stats and last seen
         statsToInsert.push({
-          server_id: serverEntry.id,
+          server_id: rawId,
           timestamp: new Date(timestamp),
           players: data.players,
           max_players: data.playerLimit,
@@ -120,7 +114,7 @@ export class ServerProcessorService {
           ping: data.ping,
           online: true
         });
-        onlineServerIds.push(serverEntry.id);
+        onlineServerIds.push(rawId);
 
         // Update in-memory state
         serverEntry.currentData = data;
@@ -141,7 +135,7 @@ export class ServerProcessorService {
         }
 
         statsToInsert.push({
-          server_id: serverEntry.id,
+          server_id: rawId,
           timestamp: new Date(timestamp),
           online: false
         });
@@ -179,11 +173,10 @@ export class ServerProcessorService {
    * Update the comprehensive server cache (public for shutdown)
    */
   getCachedServerElements(): ServerElement[] {
-    //todo should this have a TTL - this risks stale data, though they are timestamped
-    return Array.from(this.serverDataCache.values());
+    return this.cache.getValues();
   }
 
   getServerCount(): number {
-    return this.serverDataCache.size;
+    return this.cache.quickSize();
   }
 }

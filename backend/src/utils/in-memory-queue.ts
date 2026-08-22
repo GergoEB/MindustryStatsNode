@@ -121,7 +121,7 @@ export class InMemoryCache {
    */
   async get<T = any>(key: string): Promise<T | null> {
     const entry = this.cache.get(key);
-    
+
     if (!entry) {
       return null;
     }
@@ -133,6 +133,18 @@ export class InMemoryCache {
     }
 
     return entry.value;
+  }
+
+  /*
+    * Get all values from the cache
+    * Ensures every item is checked for expiration before returning
+    * DO NOT MODIFY OBJECTS - This returns references not copies
+    */
+  getValues<T = any>(): T[] {
+    const now = Date.now();
+    return Array.from(this.cache.entries())
+      .filter(([_, entry]) => !entry.expiresAt || now <= entry.expiresAt)
+      .map(([_, entry]) => entry.value);
   }
 
   /**
@@ -147,7 +159,7 @@ export class InMemoryCache {
    */
   async exists(key: string): Promise<boolean> {
     const entry = this.cache.get(key);
-    
+
     if (!entry) {
       return false;
     }
@@ -166,7 +178,7 @@ export class InMemoryCache {
    */
   async expire(key: string, ttl: number): Promise<void> {
     const entry = this.cache.get(key);
-    
+
     if (entry) {
       entry.expiresAt = Date.now() + (ttl * 1000);
     }
@@ -199,5 +211,13 @@ export class InMemoryCache {
         this.cache.delete(key);
       }
     }
+  }
+
+  /**
+   * Get quick size of queue. Does not take into account expired entries
+   * @returns Size of cache
+   */
+  quickSize(): number {
+    return this.cache.size;
   }
 }

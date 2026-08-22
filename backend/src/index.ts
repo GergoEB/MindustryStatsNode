@@ -102,7 +102,7 @@ export class MindustryStatsApp {
         this.cache,
         processorConfig
       );
-      this.apiService = new ApiService(this.cache, apiConfig);
+      this.apiService = new ApiService(apiConfig);
 
       // Initialize processor data storage
       await this.processorService.initialize();

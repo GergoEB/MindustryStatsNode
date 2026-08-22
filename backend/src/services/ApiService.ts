@@ -45,13 +45,11 @@ const StrictHistoryQuery = t.Object({
  * Exposes REST API endpoints with caching and strict query parameter validation
  */
 export class ApiService {
-  private serverDataCache: InMemoryCache;
   private config: ApiServiceConfig;
   private app!: Elysia;
   private httpServer!: http.Server;
 
-  constructor(serverDataCache: InMemoryCache, config: ApiServiceConfig) {
-    this.serverDataCache = serverDataCache;
+  constructor(config: ApiServiceConfig) {
     this.config = config;
   }
 
