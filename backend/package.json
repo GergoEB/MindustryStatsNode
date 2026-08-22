@@ -7,7 +7,7 @@
   "main": "src/main.ts",
   "scripts": {
     "start": "bun src/index.ts",
-    "dev": "bun run --inspect-wait src/index.ts"
+    "dev": "bun src/index.ts"
   },
   "dependencies": {
     "@elysia/cors": "^1.4.2",
