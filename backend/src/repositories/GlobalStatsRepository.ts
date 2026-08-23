@@ -1,23 +1,20 @@
 import sequelize from '../config/database.js';
 import { QueryTypes } from 'sequelize';
 import { type GamemodeHistoryEntry, type GamemodeInfo, type ServerShareEntry } from '../../../common/models/GlobalStatsTypes.js';
-import {removeColorsFromMindustry} from "../../../common/Mindustry.js";
 import {
     PLAYER_FILTER_REPLACEMENTS,
     pickAggregateSource,
     playerFilterSql,
 } from './aggregateTiers.js';
-import {getModeName, getVanillaModeName, modeNameToIntOrNull} from "../../../common/Gamemode.js";
+import {getVanillaModeName, modeNameToIntOrNull} from "../../../common/Gamemode.js";
 
 interface RawGamemodeHistoryRow {
     timestamp: number;
-    mode_name: string;
+    clean_name: string;
     players: number | null;
-    game_mode: number;
 }
 
 interface RawGamemodeListRow {
-    mode_name: string;
     game_mode: number;
     server_count: number;
 }
@@ -52,7 +49,7 @@ function rangeBounds(startDate?: number, endDate?: number): { rangeStart: string
 
 /**
  * Builds the SQL for bucketed gamemode history query.
- * Returns player counts grouped by mode_name per time bucket.
+ * Returns player counts grouped by gamemode per time bucket.
  *
  * Reads from the map-keyed continuous aggregates (see aggregateTiers.ts); the
  * gamemode is resolved from server_maps_registry at read time, so correcting a
@@ -61,7 +58,15 @@ function rangeBounds(startDate?: number, endDate?: number): { rangeStart: string
  *
  * time_bucket_gapfill fills each mode's series independently, which is what the
  * old all_buckets × all_modes cross join was emulating — empty buckets still
- * keep their mode_name instead of coming back as null rows.
+ * keep their gamemode instead of coming back as null rows.
+ *
+ * Grouping happens on gamemode_registry.id -- one smallint -- all the way
+ * through bucketing and gapfill, where the row counts are large; the registry
+ * is joined in once at the end, over the handful of surviving rows, and the
+ * final merge happens on the cleaned display name.  The old shape grouped on
+ * the raw (game_mode, mode_name) pair throughout, which both widened every hash
+ * key with a text column and split one gamemode into several series whenever a
+ * server dressed its mode name in different colour codes.
  */
 function buildGamemodeHistoryQuery(
     hoursBack: number,
@@ -86,9 +91,11 @@ function buildGamemodeHistoryQuery(
 
     const query = `
         SELECT extract(epoch FROM g.gf_bucket) * 1000 AS timestamp,
-               g.mode_name,
-               g.game_mode,
-               g.players
+               gr.clean_name,
+               -- Gaps are NULL and SUM skips them, so a bucket only comes back
+               -- NULL when every variant of the mode was idle -- which is the
+               -- gap the chart wants to draw.
+               SUM(g.players) AS players
         FROM (
             SELECT time_bucket_gapfill(
                            :bucketSeconds * INTERVAL '1 second',
@@ -96,29 +103,33 @@ function buildGamemodeHistoryQuery(
                            ${rangeStart},
                            ${rangeEnd}
                    ) AS gf_bucket,
-                   ps.mode_name,
-                   ps.game_mode,
+                   ps.gamemode_id,
                    SUM(ps.players) AS players
             FROM (
                 -- Peak per server first, so summing across servers cannot
                 -- double count a server that changed map mid-bucket.
                 SELECT time_bucket(:bucketSeconds * INTERVAL '1 second', src.${time}) AS bucket,
                        src.server_id,
-                       smr.mode_name,
-                       smr.game_mode,
+                       smr.gamemode_id,
                        MAX(src.${source.playersColumn}) AS players
                 FROM ${source.mapTable} src
                          JOIN server_maps_registry smr ON src.map_registry_id = smr.id
                 WHERE ${conditions.join('\n                  AND ')}
-                GROUP BY 1, 2, 3, 4
+                GROUP BY 1, 2, 3
             ) ps
             WHERE ps.bucket >= ${rangeStart}
               AND ps.bucket < ${rangeEnd}
             -- Aliased away from the subquery's own bucket column: an
             -- unqualified GROUP BY name binds to the input column.
-            GROUP BY gf_bucket, ps.mode_name, ps.game_mode
+            GROUP BY gf_bucket, ps.gamemode_id
         ) g
-        ORDER BY g.gf_bucket, g.mode_name
+        -- Name resolution last: one hash join against a table small enough to
+        -- stay permanently resident, over the already-reduced result.  Merging
+        -- on the display name here is what folds the colour-code variants of a
+        -- mode back into a single series.
+        JOIN gamemode_registry gr ON g.gamemode_id = gr.id
+        GROUP BY g.gf_bucket, gr.clean_name
+        ORDER BY g.gf_bucket, gr.clean_name
     `;
 
     const replacements = {
@@ -229,43 +240,52 @@ export async function getGlobalGamemodeHistory(
         type: QueryTypes.SELECT
     }) as RawGamemodeHistoryRow[];
 
-    return rows.map(r => {
-        const modeName = getModeName(r.mode_name, r.game_mode);
-        return {
-            timestamp: Number(r.timestamp),
-            modeName: modeName ?? 'Unknown',
-            cleanName: modeName ?? 'Unknown',
-            players: r.players == null ? null : Number(r.players)
-        }
-    });
+    // clean_name is stored already stripped and already backed off to the
+    // vanilla name, so there is nothing left to do per row here.
+    return rows.map(r => ({
+        timestamp: Number(r.timestamp),
+        modeName:  r.clean_name || 'Unknown',
+        cleanName: r.clean_name || 'Unknown',
+        players:   r.players == null ? null : Number(r.players)
+    }));
 }
 
 /**
  * Get list of all gamemodes with server counts
+ *
+ * Still rolled up to the vanilla enum value rather than to gamemode_registry.id:
+ * the returned modeName is what /api/gamemodes/:modeName/servers feeds back
+ * through modeNameToIntOrNull(), which only knows the five vanilla names.
+ * Listing custom modes separately needs that round trip to key on the registry
+ * ID instead, which is an API change and out of scope here.
+ *
+ * The old query filtered on `mode_name != ''`, which silently dropped every
+ * server whose mode name was empty -- by then, all of them.  gamemode_registry
+ * carries the name, so the count no longer has to guess.
  */
 export async function getGamemodeList(): Promise<GamemodeInfo[]> {
-    //todo gamemode registry, that will unlock this feature fully
     const query = `
-        SELECT --smr.mode_name,
-               COUNT(DISTINCT smh.server_id) AS server_count,
-               smr.game_mode
-        FROM server_maps_registry smr
-                 JOIN server_maps_history smh ON smr.id = smh.map_id
-        WHERE smr.mode_name IS NOT NULL
-          AND smr.mode_name != ''
-        GROUP BY smr.game_mode--, smr.mode_name
-        --ORDER BY smr.mode_name
+        SELECT gr.game_mode,
+               COUNT(DISTINCT smh.server_id) AS server_count
+        FROM gamemode_registry gr
+                 JOIN server_maps_registry smr ON smr.gamemode_id = gr.id
+                 JOIN server_maps_history smh ON smh.map_id = smr.id
+        GROUP BY gr.game_mode
+        ORDER BY server_count DESC
     `;
 
     const rows = await sequelize.query(query, {
         type: QueryTypes.SELECT
     }) as RawGamemodeListRow[];
 
-    return rows.map(r => ({
-        modeName: getVanillaModeName(r.game_mode),
-        serverCount: Number(r.server_count),
-        cleanName: getVanillaModeName(r.game_mode)//removeColorsFromMindustry(r.mode_name) ?? "Null",
-    }));
+    return rows.map(r => {
+        const modeName = getVanillaModeName(r.game_mode);
+        return {
+            modeName,
+            serverCount: Number(r.server_count),
+            cleanName: modeName,
+        };
+    });
 }
 
 /**

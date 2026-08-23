@@ -96,11 +96,16 @@ export class ServerProcessorService {
           mode_name: data.modeName
         });
 
-        // Queue up Map update only if changed
+        // Queue up Map update only if changed.
+        // mode_name rides along with the map (not just the MOTD) because the
+        // map registry's gamemode link is keyed on (game_mode, mode_name) --
+        // without it every new registry row would collapse onto the nameless
+        // vanilla gamemode.
         mapsToUpdate.push({
           server_id: rawId,
           map_name: data.mapName,
-          game_mode: data.mode
+          game_mode: data.mode,
+          mode_name: data.modeName
         });
 
         // Always queue stats and last seen

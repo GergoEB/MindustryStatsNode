@@ -28,6 +28,7 @@ import {
     type ServerRecord,
 } from '../../../common/models/RepositoryTypes.js';
 import {CURRENT_DATA_FRESH_THRESHOLD, MAX_REALISTIC_PLAYERCOUNT} from "../const.js";
+import { getModeName } from '../../../common/Gamemode.js';
 
 const logger = createLogger('ServerRepository');
 
@@ -373,8 +374,15 @@ async function bulkSaveHistoryEntries<T extends Record<string, unknown>>(opts: {
     entries:          T[];
     /** Unique natural key for deduplication and registry lookup. */
     keyOf:            (entry: T) => string;
-    /** Columns to upsert into the registry table. */
+    /** Columns forming the registry's natural key (also the ON CONFLICT target). */
     registryColumns:  string[];
+    /**
+     * Extra columns written on insert but not part of the natural key, i.e.
+     * values functionally determined by it (map -> gamemode_id).  They are not
+     * matched on when the IDs are read back, so a row that already exists keeps
+     * whatever it was inserted with.
+     */
+    payloadColumns?:  string[];
     /** SQL table name for the registry. */
     registryTable:    string;
     /** SQL table name for the history. */
@@ -407,11 +415,12 @@ async function bulkSaveHistoryEntries<T extends Record<string, unknown>>(opts: {
     }
 
     const registryData = Array.from(unique.values()).map(opts.toRegistryRow);
+    const insertColumns = [...opts.registryColumns, ...(opts.payloadColumns ?? [])];
 
     // 2. Upsert registry
     await sequelize.query(`
-        INSERT INTO ${opts.registryTable} (${opts.registryColumns.join(', ')})
-        SELECT ${opts.registryColumns.join(', ')}
+        INSERT INTO ${opts.registryTable} (${insertColumns.join(', ')})
+        SELECT ${insertColumns.join(', ')}
         FROM jsonb_to_recordset(:registryData::jsonb) AS x(${opts.registryTypeDef})
         ON CONFLICT (${opts.registryColumns.join(', ')}) DO NOTHING
     `, {
@@ -529,21 +538,118 @@ export async function bulkSaveMotds(newMotds: any[]): Promise<Map<number, number
     });
 }
 
+// ─── Gamemode registry ────────────────────────────────────────────────────────
+
+/**
+ * (game_mode, mode_name) -> gamemode_registry.id, for the lifetime of the
+ * process.
+ *
+ * The mapping is immutable once a row exists, and the whole table is a handful
+ * of rows, so caching it turns a per-poll-cycle round trip into a Map lookup.
+ * Only pairs that are genuinely new reach the database.
+ */
+const gamemodeIdCache = new Map<string, number>();
+
+const gamemodeKey = (gameMode: number, modeName: string): string =>
+    `${gameMode}\x00${modeName}`;
+
+interface GamemodePair {
+    game_mode: number;
+    mode_name: string;
+}
+
+/**
+ * Ensures every (game_mode, mode_name) pair has a gamemode_registry row and
+ * returns the cache holding their IDs.
+ *
+ * clean_name is derived here rather than in SQL so the display name stays
+ * defined in exactly one place (common/Gamemode.ts); migration 24 seeds the
+ * historical rows with a SQL translation of the same rule.
+ */
+async function resolveGamemodeIds(pairs: GamemodePair[]): Promise<Map<string, number>> {
+    const missing = new Map<string, Record<string, unknown>>();
+
+    for (const p of pairs) {
+        const key = gamemodeKey(p.game_mode, p.mode_name);
+        if (gamemodeIdCache.has(key) || missing.has(key)) continue;
+        missing.set(key, {
+            game_mode:  p.game_mode,
+            mode_name:  p.mode_name,
+            clean_name: getModeName(p.mode_name, p.game_mode),
+        });
+    }
+
+    if (missing.size === 0) return gamemodeIdCache;
+
+    const rows = JSON.stringify(Array.from(missing.values()));
+
+    await sequelize.query(`
+        INSERT INTO gamemode_registry (game_mode, mode_name, clean_name)
+        SELECT game_mode, mode_name, clean_name
+        FROM jsonb_to_recordset(:rows::jsonb) AS x(game_mode smallint, mode_name text, clean_name text)
+        ON CONFLICT (game_mode, mode_name) DO NOTHING
+    `, { replacements: { rows }, type: QueryTypes.INSERT });
+
+    // Read back rather than using RETURNING: DO NOTHING returns nothing for the
+    // rows another instance inserted first.
+    const fetched: any[] = await sequelize.query(`
+        SELECT g.id, g.game_mode, g.mode_name
+        FROM gamemode_registry g
+                 JOIN jsonb_to_recordset(:rows::jsonb) AS x(game_mode smallint, mode_name text)
+                      ON g.game_mode = x.game_mode AND g.mode_name = x.mode_name
+    `, { replacements: { rows }, type: QueryTypes.SELECT });
+
+    for (const r of fetched) {
+        gamemodeIdCache.set(gamemodeKey(Number(r.game_mode), r.mode_name), Number(r.id));
+    }
+
+    return gamemodeIdCache;
+}
+
 export async function bulkSaveMaps(newMaps: any[]): Promise<Map<number, number>> {
+    if (!newMaps.length) return new Map();
+
+    // Nail the nullable fields down once: they are part of both the map's
+    // natural key and the gamemode's, so the two have to agree exactly.
+    const entries = newMaps.map(e => ({
+        ...e,
+        map_name:  e.map_name  ?? 'Unknown',
+        game_mode: e.game_mode ?? 0,
+        mode_name: e.mode_name ?? '',
+    }));
+
+    const gamemodeIds = await resolveGamemodeIds(entries);
+
+    // server_maps_registry.gamemode_id is NOT NULL, so an unresolved gamemode
+    // would fail the whole batch insert rather than just its own row.
+    const resolved = entries.filter(e => {
+        if (gamemodeIds.has(gamemodeKey(e.game_mode, e.mode_name))) return true;
+        logger.error(
+            `bulkSaveMaps: no gamemode registry ID for (${e.game_mode}, ${e.mode_name})`
+        );
+        return false;
+    });
+
+    if (!resolved.length) return new Map();
+
     return await bulkSaveHistoryEntries({
-        entries:         newMaps,
+        entries:         resolved,
         keyOf:           e => `${normalize((e as any).map_name)}|${normalize((e as any).game_mode)}|${normalize((e as any).mode_name)}`,
         registryColumns: ['map_name', 'game_mode', 'mode_name'],
+        // Functionally determined by (game_mode, mode_name), so it never
+        // disagrees with the natural key it is stored alongside.
+        payloadColumns:  ['gamemode_id'],
         registryTable:   'server_maps_registry',
         historyTable:    'server_maps_history',
         historyFkColumn: 'map_id',
         historyModel:    ServerMapHistory,
         toRegistryRow:   e => ({
-            map_name:  (e as any).map_name  ?? 'Unknown',
-            game_mode: (e as any).game_mode ?? 0,
-            mode_name: (e as any).mode_name ?? '',
+            map_name:    (e as any).map_name,
+            game_mode:   (e as any).game_mode,
+            mode_name:   (e as any).mode_name,
+            gamemode_id: gamemodeIds.get(gamemodeKey((e as any).game_mode, (e as any).mode_name)),
         }),
-        registryTypeDef: 'map_name text, game_mode smallint, mode_name text',
+        registryTypeDef: 'map_name text, game_mode smallint, mode_name text, gamemode_id smallint',
         logTag:          'bulkSaveMaps',
     });
 }
