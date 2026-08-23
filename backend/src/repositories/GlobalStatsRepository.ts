@@ -2,7 +2,11 @@ import sequelize from '../config/database.js';
 import { QueryTypes } from 'sequelize';
 import { type GamemodeHistoryEntry, type GamemodeInfo, type ServerShareEntry } from '../../../common/models/GlobalStatsTypes.js';
 import {removeColorsFromMindustry} from "../../../common/Mindustry.js";
-import { MAX_REALISTIC_PLAYERCOUNT } from '../const.js';
+import {
+    PLAYER_FILTER_REPLACEMENTS,
+    pickAggregateSource,
+    playerFilterSql,
+} from './aggregateTiers.js';
 import {getModeName, getVanillaModeName, modeNameToIntOrNull} from "../../../common/Gamemode.js";
 
 interface RawGamemodeHistoryRow {
@@ -28,160 +32,171 @@ interface RawServerShareRow {
 }
 
 /**
+ * Range bounds shared by both builders.
+ *
+ * The end bound is exclusive but pushed out by one bucket so the bucket that is
+ * currently filling up is still returned.
+ */
+function rangeBounds(startDate?: number, endDate?: number): { rangeStart: string; rangeEnd: string } {
+    const fixedWindow = startDate != null && endDate != null;
+
+    return {
+        rangeStart: fixedWindow
+            ? "time_bucket(:bucketSeconds * INTERVAL '1 second', to_timestamp(:startDate / 1000.0))"
+            : "time_bucket(:bucketSeconds * INTERVAL '1 second', NOW() - interval '1 hour' * :hoursBack)",
+        rangeEnd: fixedWindow
+            ? "(time_bucket(:bucketSeconds * INTERVAL '1 second', to_timestamp(:endDate / 1000.0)) + :bucketSeconds * INTERVAL '1 second')"
+            : "(time_bucket(:bucketSeconds * INTERVAL '1 second', NOW()) + :bucketSeconds * INTERVAL '1 second')",
+    };
+}
+
+/**
  * Builds the SQL for bucketed gamemode history query.
  * Returns player counts grouped by mode_name per time bucket.
- * Uses a cross-join of all_buckets × all_modes so empty buckets
- * retain their mode_name instead of coming back as null rows.
+ *
+ * Reads from the map-keyed continuous aggregates (see aggregateTiers.ts); the
+ * gamemode is resolved from server_maps_registry at read time, so correcting a
+ * map's classification takes effect immediately instead of needing years of
+ * materialised data rebuilt.
+ *
+ * time_bucket_gapfill fills each mode's series independently, which is what the
+ * old all_buckets × all_modes cross join was emulating — empty buckets still
+ * keep their mode_name instead of coming back as null rows.
  */
 function buildGamemodeHistoryQuery(
     hoursBack: number,
-    bucketSeconds: number,
+    bucketMinutes: number,
     startDate?: number,
     endDate?: number
 ): { query: string; replacements: Record<string, unknown> } {
-    const timeFilter =
-        startDate != null && endDate != null
-            ? 'timestamp >= to_timestamp(:startDate / 1000.0) AND timestamp <= to_timestamp(:endDate / 1000.0)'
-            : "timestamp > NOW() - interval '1 hour' * :hoursBack";
+    const source = pickAggregateSource(bucketMinutes);
+    const time = source.timeColumn;
+    const { rangeStart, rangeEnd } = rangeBounds(startDate, endDate);
 
     const timeParams =
         startDate != null && endDate != null
             ? { startDate, endDate }
             : { hoursBack };
 
-    const rangeStart =
-        startDate != null
-            ? 'time_bucket(:bucketSeconds * INTERVAL \'1 second\', to_timestamp(:startDate / 1000.0))'
-            : "time_bucket(:bucketSeconds * INTERVAL '1 second', NOW() - interval '1 hour' * :hoursBack)";
-
-    const rangeEnd =
-        endDate != null
-            ? 'time_bucket(:bucketSeconds * INTERVAL \'1 second\', to_timestamp(:endDate / 1000.0))'
-            : "time_bucket(:bucketSeconds * INTERVAL '1 second', NOW())";
+    const conditions = [
+        `src.${time} >= ${rangeStart}`,
+        `src.${time} < ${rangeEnd}`,
+        playerFilterSql(source, 'src'),
+    ].filter((c): c is string => c != null);
 
     const query = `
-        WITH time_range AS (
-            SELECT ${rangeStart} AS range_start,
-                   ${rangeEnd}   AS range_end
-        ),
-             all_buckets AS (
-                 SELECT generate_series(
-                                (SELECT range_start FROM time_range),
-                                (SELECT range_end   FROM time_range),
-                                :bucketSeconds * INTERVAL '1 second'
-                        ) AS bucket
-             ),
-             per_server AS (
-                 SELECT
-                     time_bucket(:bucketSeconds * INTERVAL '1 second', ss.timestamp) AS bucket,
-                     ss.server_id,
-                     smr.mode_name,
-                     smr.game_mode,
-                     MAX(ss.players) AS players
-                 FROM server_stats ss
-                          JOIN server_maps_registry smr ON ss.map_registry_id = smr.id
-                 WHERE ${timeFilter}
-                   AND ss.players >= 0 AND ss.players < :maxRealisticPlayerCount
-                 GROUP BY bucket, ss.server_id, smr.mode_name, smr.game_mode
-             ),
-             aggregated AS (
-                 SELECT bucket, mode_name, game_mode, SUM(players) AS players
-                 FROM per_server
-                 GROUP BY bucket, mode_name, game_mode
-             ),
-             all_modes AS (
-                 SELECT DISTINCT mode_name, game_mode FROM aggregated
-             )
-        SELECT extract(epoch FROM b.bucket) * 1000 AS timestamp,
-               m.mode_name,
-               m.game_mode,
-               a.players
-        FROM all_buckets b
-                 CROSS JOIN all_modes m
-                 LEFT JOIN aggregated a ON a.bucket = b.bucket
-            AND a.mode_name = m.mode_name
-            AND a.game_mode = m.game_mode
-        ORDER BY b.bucket, m.mode_name
+        SELECT extract(epoch FROM g.gf_bucket) * 1000 AS timestamp,
+               g.mode_name,
+               g.game_mode,
+               g.players
+        FROM (
+            SELECT time_bucket_gapfill(
+                           :bucketSeconds * INTERVAL '1 second',
+                           ps.bucket,
+                           ${rangeStart},
+                           ${rangeEnd}
+                   ) AS gf_bucket,
+                   ps.mode_name,
+                   ps.game_mode,
+                   SUM(ps.players) AS players
+            FROM (
+                -- Peak per server first, so summing across servers cannot
+                -- double count a server that changed map mid-bucket.
+                SELECT time_bucket(:bucketSeconds * INTERVAL '1 second', src.${time}) AS bucket,
+                       src.server_id,
+                       smr.mode_name,
+                       smr.game_mode,
+                       MAX(src.${source.playersColumn}) AS players
+                FROM ${source.mapTable} src
+                         JOIN server_maps_registry smr ON src.map_registry_id = smr.id
+                WHERE ${conditions.join('\n                  AND ')}
+                GROUP BY 1, 2, 3, 4
+            ) ps
+            WHERE ps.bucket >= ${rangeStart}
+              AND ps.bucket < ${rangeEnd}
+            -- Aliased away from the subquery's own bucket column: an
+            -- unqualified GROUP BY name binds to the input column.
+            GROUP BY gf_bucket, ps.mode_name, ps.game_mode
+        ) g
+        ORDER BY g.gf_bucket, g.mode_name
     `;
 
-    const replacements = { ...timeParams, bucketSeconds, maxRealisticPlayerCount: MAX_REALISTIC_PLAYERCOUNT };
+    const replacements = {
+        ...timeParams,
+        ...PLAYER_FILTER_REPLACEMENTS,
+        bucketSeconds: source.bucketMinutes * 60,
+    };
     return { query, replacements };
 }
 
 /**
  * Builds the SQL for bucketed server share query for a specific gamemode.
  * Returns player counts per server with group info.
- * Uses a cross-join of all_buckets × all_servers so empty buckets
- * retain server identity instead of coming back as null rows.
+ *
+ * Same aggregate-backed shape as above; time_bucket_gapfill fills each server's
+ * series, so empty buckets retain server identity instead of coming back as
+ * null rows.
  */
 function buildServerShareQuery(
     modeName: string,
     hoursBack: number,
-    bucketSeconds: number,
+    bucketMinutes: number,
     startDate?: number,
     endDate?: number
 ): { query: string; replacements: Record<string, unknown> } {
-    // FIX: Redefined timeFilter to align exactly with the dynamic range boundaries
-    const timeFilter =
-        startDate != null && endDate != null
-            ? 'ss.timestamp >= to_timestamp(:startDate / 1000.0) AND ss.timestamp <= to_timestamp(:endDate / 1000.0)'
-            : "ss.timestamp >= NOW() - interval '1 hour' * :hoursBack AND ss.timestamp <= NOW()";
+    const source = pickAggregateSource(bucketMinutes);
+    const time = source.timeColumn;
+    const { rangeStart, rangeEnd } = rangeBounds(startDate, endDate);
 
     const timeParams =
         startDate != null && endDate != null
             ? { startDate, endDate }
             : { hoursBack };
 
-    const rangeStart =
-        startDate != null
-            ? 'time_bucket(:bucketSeconds * INTERVAL \'1 second\', to_timestamp(:startDate / 1000.0))'
-            : "time_bucket(:bucketSeconds * INTERVAL '1 second', NOW() - interval '1 hour' * :hoursBack)";
-
-    const rangeEnd =
-        endDate != null
-            ? 'time_bucket(:bucketSeconds * INTERVAL \'1 second\', to_timestamp(:endDate / 1000.0))'
-            : "time_bucket(:bucketSeconds * INTERVAL '1 second', NOW())";
+    const conditions = [
+        'smr.game_mode = :modeInt',
+        `src.${time} >= ${rangeStart}`,
+        `src.${time} < ${rangeEnd}`,
+        playerFilterSql(source, 'src'),
+    ].filter((c): c is string => c != null);
 
     const query = `
         WITH bucketed_stats AS (
-            SELECT
-                -- time_bucket_gapfill automatically creates rows for missing time intervals
-                time_bucket_gapfill(
-                        :bucketSeconds * INTERVAL '1 second',
-                        ss.timestamp,
-                        ${rangeStart}, -- Start bound: ensures gapfill covers the start of your graph
-                        ${rangeEnd}    -- End bound: ensures gapfill covers the end of your graph
-                ) AS bucket,
-                ss.server_id,
-                MAX(ss.players) AS players -- Leaves gaps as NULL automatically
-            FROM server_stats ss
-                     JOIN server_maps_registry smr ON ss.map_registry_id = smr.id
-            WHERE smr.game_mode = :modeInt
-              --WHERE smr.mode_name = colon modeName OR smr.game_mode = colon modeInt
-              AND ${timeFilter}
-              AND ss.players >= 0
-              AND ss.players < :maxRealisticPlayerCount
-            GROUP BY bucket, ss.server_id
+            SELECT time_bucket_gapfill(
+                           :bucketSeconds * INTERVAL '1 second',
+                           src.${time},
+                           ${rangeStart},
+                           ${rangeEnd}
+                   ) AS gf_bucket,
+                   src.server_id,
+                   MAX(src.${source.playersColumn}) AS players -- gaps stay NULL
+            FROM ${source.mapTable} src
+                     JOIN server_maps_registry smr ON src.map_registry_id = smr.id
+            WHERE ${conditions.join('\n              AND ')}
+            -- Aliased away from the source's own bucket column: an
+            -- unqualified GROUP BY name binds to the input column, which would
+            -- silently group at the source's resolution instead of the
+            -- requested one.
+            GROUP BY gf_bucket, src.server_id
         )
         SELECT
-            extract(epoch FROM bs.bucket) * 1000 AS timestamp,
+            extract(epoch FROM bs.gf_bucket) * 1000 AS timestamp,
             bs.server_id,
             s.server_group_id,
             '' AS server_name,
             sg.name AS group_name,
             bs.players
         FROM bucketed_stats bs
--- Join the metadata AFTER the heavy lifting is done
+                 -- Join the metadata AFTER the heavy lifting is done
                  JOIN servers s ON bs.server_id = s.id
                  JOIN server_groups sg ON s.server_group_id = sg.id
-        ORDER BY bs.bucket, bs.server_id;
+        ORDER BY bs.gf_bucket, bs.server_id;
     `;
 
     const replacements = {
         ...timeParams,
-        bucketSeconds,
-        //modeName,
-        maxRealisticPlayerCount: MAX_REALISTIC_PLAYERCOUNT,
+        ...PLAYER_FILTER_REPLACEMENTS,
+        bucketSeconds: source.bucketMinutes * 60,
         modeInt: modeNameToIntOrNull(modeName),
     };
     return { query, replacements };
@@ -204,7 +219,7 @@ export async function getGlobalGamemodeHistory(
 
     const { query, replacements } = buildGamemodeHistoryQuery(
         hoursBack,
-        bucketMinutes * 60,
+        bucketMinutes,
         startDate,
         endDate
     );
@@ -270,7 +285,7 @@ export async function getServerShareByGamemode(
     const { query, replacements } = buildServerShareQuery(
         modeName,
         hoursBack,
-        bucketMinutes * 60,
+        bucketMinutes,
         startDate,
         endDate
     );

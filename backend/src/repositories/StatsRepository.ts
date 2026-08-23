@@ -1,13 +1,19 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // statsRepository.ts
-// Player-count history and aggregation queries against server_stats.
+// Player-count history queries.  These read from the continuous aggregates
+// built in migration 21 (falling back to raw server_stats only for windows
+// finer than the base aggregate).
 // These are the TimescaleDB-heavy queries; keep raw SQL here intentionally.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import sequelize from '../config/database.js';
 import { type ServerHistory } from '../../../common/models/serverData.js';
 import { QueryTypes } from 'sequelize';
-import { MAX_REALISTIC_PLAYERCOUNT } from '../const.js';
+import {
+    PLAYER_FILTER_REPLACEMENTS,
+    pickAggregateSource,
+    playerFilterSql,
+} from './aggregateTiers.js';
 
 // ─── Internal helpers ────────────────────────────────────────────────────────
 
@@ -28,116 +34,109 @@ interface RawHistoryRow {
 }
 
 /** WHERE fragment and replacements for a given scope. */
-function scopeFilter(scope: Scope): { sql: string; params: Record<string, unknown> } {
+function scopeFilter(scope: Scope): { sql: string | null; params: Record<string, unknown> } {
     switch (scope.kind) {
         case 'global':
-            return {
-                sql: 'players >= 0 AND players < :maxRealisticPlayerCount',
-                params: {maxRealisticPlayerCount: MAX_REALISTIC_PLAYERCOUNT}
-            };
+            return { sql: null, params: {} };
         case 'server':
             return {
-                sql: 'server_id = :serverId AND players >= 0 AND players < :maxRealisticPlayerCount',
-                params: { serverId: scope.serverId, maxRealisticPlayerCount: MAX_REALISTIC_PLAYERCOUNT }
+                sql: 'server_id = :serverId',
+                params: { serverId: scope.serverId }
             };
         case 'network':
             return {
-                sql: 'server_id IN (SELECT id FROM servers WHERE server_group_id = :groupId) AND players >= 0 AND players < :maxRealisticPlayerCount',
-                params: { groupId: scope.groupId, maxRealisticPlayerCount: MAX_REALISTIC_PLAYERCOUNT }
+                sql: 'server_id IN (SELECT id FROM servers WHERE server_group_id = :groupId)',
+                params: { groupId: scope.groupId }
             };
     }
 }
 
 /**
- * Builds the full SQL for a bucketed or raw history query.
+ * Builds the full SQL for a bucketed history query.
  *
- * When bucketSeconds === 0 each raw row is returned as-is (one players value
- * per timestamp).
+ * Reads from the coarsest continuous aggregate that can serve the requested
+ * bucket width (see aggregateTiers.ts) rather than from the raw hypertable, so
+ * a long range never has to decompress millions of raw rows to produce a few
+ * hundred points.  Only sub-5-minute widths still touch server_stats directly,
+ * and those windows are only a few hours wide.
  *
- * For global/network scopes the query first takes MAX(players) per server per
- * bucket, then SUMs across servers — which correctly preserves peaks.
+ * Gaps are filled by time_bucket_gapfill instead of a generate_series CTE plus
+ * LEFT JOIN: one pass, no materialised series to hash-join against.
+ *
+ * Taking MAX() of an already-max'd column is exact, so for the multi-server
+ * scopes the per-server step the old query did is folded into the same
+ * aggregation — max(max(x)) is max(x).
  */
 function buildHistoryQuery(
     scope: Scope,
-    bucketSeconds: number,
+    bucketMinutes: number,
     hoursBack: number,
     startDate?: number,
     endDate?: number
 ): { query: string; replacements: Record<string, unknown> } {
+    const source = pickAggregateSource(bucketMinutes);
     const { sql: scopeSql, params: scopeParams } = scopeFilter(scope);
-    const multiServer = scope.kind !== 'server';
-
-    // ── Time-range fragment ──────────────────────────────────────────────────
-    const timeFilter =
-        startDate != null && endDate != null
-            ? 'timestamp >= to_timestamp(:startDate / 1000.0) AND timestamp <= to_timestamp(:endDate / 1000.0)'
-            : "timestamp > NOW() - interval '1 hour' * :hoursBack";
+    const time = source.timeColumn;
 
     const timeParams =
         startDate != null && endDate != null
             ? { startDate, endDate }
             : { hoursBack };
 
-    const replacements = { ...scopeParams, ...timeParams };
+    // ── Range bounds ─────────────────────────────────────────────────────────
+    // The end bound is exclusive but pushed out by one bucket, so the bucket
+    // that is currently filling up is still returned — matching the inclusive
+    // generate_series this replaced.
+    const fixedWindow = startDate != null && endDate != null;
 
-    // ── Bucketed ─────────────────────────────────────────────────────────────
     const rangeStart =
-        startDate != null
-            ? 'time_bucket(:bucketSeconds * INTERVAL \'1 second\', to_timestamp(:startDate / 1000.0))'
+        fixedWindow
+            ? "time_bucket(:bucketSeconds * INTERVAL '1 second', to_timestamp(:startDate / 1000.0))"
             : "time_bucket(:bucketSeconds * INTERVAL '1 second', NOW() - interval '1 hour' * :hoursBack)";
 
     const rangeEnd =
-        endDate != null
-            ? 'time_bucket(:bucketSeconds * INTERVAL \'1 second\', to_timestamp(:endDate / 1000.0))'
-            : "time_bucket(:bucketSeconds * INTERVAL '1 second', NOW())";
+        fixedWindow
+            ? "(time_bucket(:bucketSeconds * INTERVAL '1 second', to_timestamp(:endDate / 1000.0)) + :bucketSeconds * INTERVAL '1 second')"
+            : "(time_bucket(:bucketSeconds * INTERVAL '1 second', NOW()) + :bucketSeconds * INTERVAL '1 second')";
 
-    const aggregation = multiServer
-        ? `
-            server_max AS (
-                SELECT bucket, server_id, MAX(players) AS max_players
-                FROM bucketed
-                GROUP BY bucket, server_id
-            ),
-            aggregated AS (
-                SELECT bucket, MAX(max_players) AS players
-                FROM server_max
-                GROUP BY bucket
-            )`
-        : `
-            aggregated AS (
-                SELECT bucket, MAX(players) AS players
-                FROM bucketed
-                GROUP BY bucket
-            )`;
+    const conditions = [
+        `${time} >= ${rangeStart}`,
+        `${time} < ${rangeEnd}`,
+        scopeSql,
+        playerFilterSql(source),
+    ].filter((c): c is string => c != null);
 
     const query = `
-        WITH time_range AS (
-            SELECT ${rangeStart} AS range_start,
-                   ${rangeEnd}   AS range_end
-        ),
-        all_buckets AS (
-            SELECT generate_series(
-                (SELECT range_start FROM time_range),
-                (SELECT range_end   FROM time_range),
-                :bucketSeconds * INTERVAL '1 second'
-            ) AS bucket
-        ),
-        bucketed AS (
-            SELECT ${multiServer ? 'server_id, ' : ''}
-                       time_bucket(:bucketSeconds * INTERVAL '1 second', timestamp) AS bucket,
-                   players
-            FROM server_stats
-            WHERE ${scopeSql} AND ${timeFilter}
-        ),
-        ${aggregation}
-        SELECT extract(epoch FROM all_buckets.bucket) * 1000 AS timestamp,
-               aggregated.players
-        FROM all_buckets
-        LEFT JOIN aggregated ON all_buckets.bucket = aggregated.bucket
-        ORDER BY all_buckets.bucket
+        SELECT extract(epoch FROM g.gf_bucket) * 1000 AS timestamp,
+               g.players
+        FROM (
+            SELECT time_bucket_gapfill(
+                           :bucketSeconds * INTERVAL '1 second',
+                           ${time},
+                           ${rangeStart},
+                           ${rangeEnd}
+                   ) AS gf_bucket,
+                   MAX(${source.playersColumn}) AS players
+            FROM ${source.table}
+            WHERE ${conditions.join('\n              AND ')}
+            -- Aliased away from the source's own bucket column: an
+            -- unqualified GROUP BY name binds to the input column, which would
+            -- silently group at the source's resolution instead of the
+            -- requested one.
+            GROUP BY gf_bucket
+        ) g
+        ORDER BY g.gf_bucket
     `;
 
-    return { query, replacements: { ...replacements, bucketSeconds, maxRealisticPlayerCount: MAX_REALISTIC_PLAYERCOUNT } };
+    return {
+        query,
+        replacements: {
+            ...scopeParams,
+            ...timeParams,
+            ...PLAYER_FILTER_REPLACEMENTS,
+            bucketSeconds: source.bucketMinutes * 60,
+        }
+    };
 }
 
 // ─── Public API ──────────────────────────────────────────────────────────────
@@ -145,7 +144,8 @@ function buildHistoryQuery(
 /**
  * Player history for a single server.
  * Pass startDate/endDate (ms epoch) for a fixed window, or hoursBack for a
- * rolling window.  bucketMinutes=0 returns raw rows.
+ * rolling window.  bucketMinutes is snapped up to the nearest width an
+ * aggregate can serve.
  */
 export async function getAggregatedHistory(
     serverId: number,
@@ -160,7 +160,7 @@ export async function getAggregatedHistory(
 
     const { query, replacements } = buildHistoryQuery(
         { kind: 'server', serverId },
-        bucketMinutes * 60,
+        bucketMinutes,
         hoursBack,
         startDate,
         endDate
@@ -180,7 +180,7 @@ export async function getGlobalPlayerHistory(
 
     const { query, replacements } = buildHistoryQuery(
         { kind: 'global' },
-        bucketMinutes * 60,
+        bucketMinutes,
         hoursBack
     );
     const rows = await sequelize.query(query, { replacements, type: QueryTypes.SELECT }) as RawHistoryRow[];
@@ -199,7 +199,7 @@ export async function getNetworkPlayerHistory(
 
     const { query, replacements } = buildHistoryQuery(
         { kind: 'network', groupId },
-        bucketMinutes * 60,
+        bucketMinutes,
         hoursBack
     );
     const rows = await sequelize.query(query, { replacements, type: QueryTypes.SELECT }) as RawHistoryRow[];

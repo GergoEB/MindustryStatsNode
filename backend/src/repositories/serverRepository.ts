@@ -82,13 +82,14 @@ export async function getAllServerElements(hoursBack: number = 36): Promise<Serv
             ORDER BY h.server_id, h.valid_from DESC
         ),
         latest_stats AS (
-            SELECT DISTINCT ON (server_id)
-                server_id, timestamp, players, max_players, wave,
-                version, version_type, ping, online
-            FROM server_stats
+            -- One row per server, upserted by bulkSaveServerStats() each poll
+            -- cycle, so this is a small table scan instead of a DISTINCT ON
+            -- across every chunk of the hypertable.
+            SELECT server_id, timestamp, players, max_players, wave,
+                   version, version_type, ping, online
+            FROM server_current
             WHERE timestamp > NOW() - interval '1 hour' * :hoursBack
               AND players >= 0 AND players < :maxRealisticPlayerCount
-            ORDER BY server_id, timestamp DESC
         )
         SELECT
             s.id, sg.name, s.server_group_id AS "groupId",
@@ -296,6 +297,68 @@ export async function bulkUpdateLastSeen(serverIds: number[]): Promise<void> {
 export async function bulkSaveServerStats(statsBatch: ServerStats[]): Promise<void> {
     if (!statsBatch.length) return;
     await ServerStats.bulkCreate(<any>statsBatch);
+    await upsertServerCurrent(statsBatch);
+}
+
+/**
+ * Keeps server_current in step with the hypertable.
+ *
+ * server_current holds the newest sample per server so the read paths never
+ * have to answer "latest value per server" with a DISTINCT ON over
+ * server_stats.  Rows are deduplicated inside the batch first (ON CONFLICT
+ * cannot resolve two conflicting rows from the same statement) and the update
+ * is guarded on the timestamp, so an out-of-order batch cannot move a server
+ * backwards in time.
+ */
+async function upsertServerCurrent(statsBatch: ServerStats[]): Promise<void> {
+    const rows = statsBatch
+        .filter(stat => stat.server_id != null && stat.timestamp != null)
+        .map(stat => ({
+            server_id:        stat.server_id,
+            timestamp:        new Date(stat.timestamp).toISOString(),
+            players:          stat.players      ?? 0,
+            max_players:      stat.max_players  ?? null,
+            wave:             stat.wave         ?? null,
+            version:          stat.version      ?? null,
+            version_type:     stat.version_type ?? null,
+            ping:             stat.ping         ?? null,
+            online:           stat.online       ?? false,
+            motd_registry_id: stat.motd_registry_id ?? null,
+            map_registry_id:  stat.map_registry_id  ?? null,
+        }));
+
+    if (!rows.length) return;
+
+    await sequelize.query(`
+        INSERT INTO server_current (
+            server_id, timestamp, players, max_players, wave,
+            version, version_type, ping, online, motd_registry_id, map_registry_id
+        )
+        SELECT DISTINCT ON (x.server_id)
+            x.server_id, x.timestamp, x.players, x.max_players, x.wave,
+            x.version, x.version_type, x.ping, x.online, x.motd_registry_id, x.map_registry_id
+        FROM jsonb_to_recordset(:rows::jsonb) AS x(
+            server_id int, timestamp timestamptz, players int, max_players int, wave int,
+            version int, version_type varchar(50), ping int, online boolean,
+            motd_registry_id int, map_registry_id int
+        )
+        ORDER BY x.server_id, x.timestamp DESC
+        ON CONFLICT (server_id) DO UPDATE
+            SET timestamp        = EXCLUDED.timestamp,
+                players          = EXCLUDED.players,
+                max_players      = EXCLUDED.max_players,
+                wave             = EXCLUDED.wave,
+                version          = EXCLUDED.version,
+                version_type     = EXCLUDED.version_type,
+                ping             = EXCLUDED.ping,
+                online           = EXCLUDED.online,
+                motd_registry_id = EXCLUDED.motd_registry_id,
+                map_registry_id  = EXCLUDED.map_registry_id
+            WHERE server_current.timestamp <= EXCLUDED.timestamp
+    `, {
+        replacements: { rows: JSON.stringify(rows) },
+        type: QueryTypes.INSERT,
+    });
 }
 
 // ─── Map / MOTD history writes ────────────────────────────────────────────────
@@ -554,17 +617,22 @@ export async function getNetworkDetails(groupId: number): Promise<NetworkDetails
             SELECT id FROM servers WHERE server_group_id = :groupId
         ),
         latest_stats AS (
-            SELECT DISTINCT ON (server_id) server_id, players, timestamp
-            FROM server_stats
+            -- server_current holds exactly one row per server; the hour bound
+            -- keeps long-dead servers from counting towards active_servers.
+            SELECT server_id, players, timestamp
+            FROM server_current
             WHERE server_id IN (SELECT id FROM group_servers)
-            ORDER BY server_id, timestamp DESC
+              AND timestamp > NOW() - INTERVAL '1 hour'
         ),
         peaks AS (
+            -- Hourly continuous aggregate: max() is decomposable, so
+            -- max(max_players) is the same number the raw scan produced, without
+            -- walking (and decompressing) every chunk back to day one.
             SELECT
-                MAX(players) FILTER (WHERE timestamp > NOW() - interval '1 day')  AS daily_peak,
-                MAX(players) FILTER (WHERE timestamp > NOW() - interval '7 days') AS weekly_peak,
-                MAX(players)                                                        AS all_time_peak
-            FROM server_stats
+                MAX(max_players) FILTER (WHERE bucket > NOW() - interval '1 day')  AS daily_peak,
+                MAX(max_players) FILTER (WHERE bucket > NOW() - interval '7 days') AS weekly_peak,
+                MAX(max_players)                                                   AS all_time_peak
+            FROM server_stats_1h
             WHERE server_id IN (SELECT id FROM group_servers)
         ),
         top_server AS (
