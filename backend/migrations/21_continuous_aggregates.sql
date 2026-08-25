@@ -1,3 +1,4 @@
+--no-tran
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 21_continuous_aggregates.sql
 --
@@ -129,7 +130,7 @@ SELECT add_continuous_aggregate_policy('server_stats_1h_by_map',
 --  a transaction block, which includes DO blocks).
 --
 -- The rollups must be refreshed after the base view, since they read from it.
-CALL refresh_continuous_aggregate('server_stats_5m',        NULL, NULL);
+CALL refresh_continuous_aggregate('server_stats_5m',        null, NULL);
 CALL refresh_continuous_aggregate('server_stats_1h',        NULL, NULL);
 CALL refresh_continuous_aggregate('server_stats_1h_by_map', NULL, NULL);
 
