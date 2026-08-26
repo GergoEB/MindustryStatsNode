@@ -1,41 +1,18 @@
-import { useEffect, useRef } from "react";
-import {
-  CategoryScale,
-  Chart,
-  Filler,
-  Legend,
-  LinearScale,
-  LineController,
-  LineElement,
-  PointElement,
-  Tooltip,
-} from "chart.js";
+import { lazy } from "react";
 import {
   ServerElement,
   ServerHistory,
 } from "../../../../common/models/serverData.ts";
-import {
-  DATE_RANGE_OPTIONS,
-  DateRangeOption,
-} from "../../util/dateRangeConsts.ts";
+import { DATE_RANGE_OPTIONS } from "../../util/dateRangeConsts.ts";
 import { HistoryType, useHistory } from "../../hooks/useHistory.ts";
+import { ChartSuspense } from "../ChartSuspense.tsx";
 
-// Register Chart.js components
-Chart.register(
-  LineElement,
-  PointElement,
-  LineController,
-  CategoryScale,
-  LinearScale,
-  Tooltip,
-  Legend,
-  Filler,
-);
+// uPlot touches the DOM at render time and isn't SSR-safe without extra
+// native deps, so the chart itself lives in its own module, loaded lazily
+// and only on the client (see ChartSuspense.tsx for the pattern).
+const PlayerHistoryChart = lazy(() => import("./PlayerHistoryChart.tsx"));
 
 const ServerHistoryChart = ({ id }: ServerElement) => {
-  const chartRef = useRef<HTMLCanvasElement>(null);
-  const chartInstance = useRef<Chart | null>(null);
-
   const {
     chartData,
     loading,
@@ -51,128 +28,6 @@ const ServerHistoryChart = ({ id }: ServerElement) => {
 
   // Helper for date pickers
   const today = new Date().toISOString().split("T")[0];
-
-  useEffect(() => {
-    if (!chartRef.current) return;
-
-    if (chartInstance.current) {
-      chartInstance.current.destroy();
-    }
-
-    const labels = chartData.map((h) => formatTime(h.timestamp, selectedRange));
-    const data = chartData.map((h) => h.players);
-
-    const ctx = chartRef.current.getContext("2d");
-    if (!ctx) return;
-
-    chartInstance.current = new Chart(ctx, {
-      type: "line",
-      data: {
-        labels,
-        datasets: [
-          {
-            label: "Players",
-            data,
-            borderColor: "rgb(249, 115, 22)",
-            backgroundColor: "rgba(249, 115, 22, 0.1)",
-            fill: true,
-            tension: 0.4,
-            borderWidth: 2,
-            pointBackgroundColor: "rgb(249, 115, 22)",
-            pointBorderColor: "rgb(249, 115, 22)",
-            pointHoverBackgroundColor: "rgb(251, 146, 60)",
-            pointHoverBorderColor: "rgb(251, 146, 60)",
-            spanGaps: false, // Show gaps when data is null
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: {
-          duration: 300,
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              precision: 0,
-              font: { size: 11 },
-              color: "rgba(255, 255, 255, 0.7)",
-            },
-            grid: {
-              display: true,
-              color: "rgba(249, 115, 22, 0.15)",
-            },
-          },
-          x: {
-            ticks: {
-              maxRotation: 0,
-              autoSkip: true,
-              maxTicksLimit: 8,
-              font: { size: 10 },
-              color: "rgba(255, 255, 255, 0.7)",
-            },
-            grid: {
-              display: true,
-              color: "rgba(249, 115, 22, 0.15)",
-            },
-          },
-        },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: "rgba(0, 0, 0, 0.9)",
-            titleColor: "rgb(249, 115, 22)",
-            bodyColor: "rgb(255, 255, 255)",
-            borderColor: "rgb(249, 115, 22)",
-            borderWidth: 1,
-            cornerRadius: 8,
-            callbacks: {
-              title: (items) => {
-                if (!items.length) return "";
-                const item = items[0];
-                const label = item.chart.data.labels?.[item.dataIndex];
-                return label?.toString() || "";
-              },
-              label: (item) => `Players: ${item.formattedValue}`,
-            },
-          },
-        },
-        elements: {
-          point: {
-            radius: 0,
-            hitRadius: 12,
-            hoverRadius: 5,
-          },
-        },
-      },
-    });
-
-    return () => {
-      if (chartInstance.current) {
-        chartInstance.current.destroy();
-      }
-    };
-  }, [chartData, selectedRange]);
-
-  const formatTime = (timestamp: number, range: DateRangeOption): string => {
-    const date = new Date(timestamp);
-    if (range === "1d") {
-      return date.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } else if (range === "7d" || range === "14d") {
-      return date.toLocaleDateString([], {
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-      });
-    } else {
-      return date.toLocaleDateString([], { month: "short", day: "numeric" });
-    }
-  };
 
   return (
     <div className="h-full w-full flex flex-col">
@@ -190,7 +45,7 @@ const ServerHistoryChart = ({ id }: ServerElement) => {
           </button>
         ))}
       </div>
-  
+
       {/* Custom Date Range Inputs */}
       {selectedRange === "custom" && (
         <div className="flex gap-4 mb-4">
@@ -225,30 +80,28 @@ const ServerHistoryChart = ({ id }: ServerElement) => {
           </div>
         </div>
       )}
-  
+
       {/* Date Range Error */}
       {dateError && (
         <div className="text-status-offline text-sm mb-4">{dateError}</div>
       )}
-  
+
       {/* Fetch Error */}
       {fetchError && (
         <div className="text-status-offline text-sm mb-4 bg-status-offline border border-status-offline rounded p-3">
           {fetchError}
         </div>
       )}
-  
-      {/* Loading indicator */}
-      {loading && (
-        <div className="flex items-center justify-center py-4">
-          <div className="animate-spin rounded h-6 w-6 border-2 border-accent border-t-transparent"></div>
-          <span className="ml-2 text-tertiary text-sm">Loading history...</span>
-        </div>
-      )}
-  
+
       {/* Chart */}
-      <div className="flex-1 min-h-0">
-        <canvas ref={chartRef}></canvas>
+      <div className="flex-1 min-h-0 relative">
+        <ChartSuspense>
+          <PlayerHistoryChart
+            data={chartData}
+            loading={loading}
+            selectedRange={selectedRange}
+          />
+        </ChartSuspense>
       </div>
     </div>
   );
