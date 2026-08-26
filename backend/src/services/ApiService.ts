@@ -135,6 +135,42 @@ export class ApiService {
       };
     }, { query: StrictNoQuery });
 
+    this.app.get('/sitemap.xml', async ({ request, set }) => {
+      try {
+        const baseUrl = new URL(request.url).origin;
+
+        const staticPaths = ['/', '/global', '/inactive'];
+
+        const { serverIds, networkIds } = await serverRepository.getSitemapIds();
+
+        const paths = [
+          ...staticPaths,
+          ...serverIds.map((id) => `/server/${id}`),
+          ...networkIds.map((id) => `/network/${id}`),
+        ];
+
+        const urlEntries = paths
+          .map((p) => `  <url><loc>${baseUrl}${p}</loc></url>`)
+          .join('\n');
+
+        const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urlEntries}\n</urlset>`;
+
+        set.headers['Content-Type'] = 'application/xml';
+        return xml;
+      } catch (error) {
+        logger.error('Error generating sitemap:', error);
+        set.status = 500;
+        return { error: 'Internal server error' };
+      }
+    }, {
+      query: StrictNoQuery,
+      use: [
+        withCache({
+          ttlMs: 3_600_000, // 1 hour TTL, sitemap doesn't need to be fresh-to-the-minute
+        })
+      ]
+    });
+
     // API Routes
     this.app.get('/api/servers/:id/details', async ({params, set}) => {
       try {

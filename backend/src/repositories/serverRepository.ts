@@ -56,6 +56,19 @@ export async function getServers(): Promise<ServerRecord[]> {
     });
 }
 
+/** Returns all server and network/group IDs, for sitemap generation. */
+export async function getSitemapIds(): Promise<{ serverIds: number[]; networkIds: number[] }> {
+    const [servers, serverGroups] = await Promise.all([
+        Server.findAll({ raw: true, attributes: ['id'] }),
+        ServerGroup.findAll({ raw: true, attributes: ['id'] }),
+    ]);
+
+    return {
+        serverIds: servers.map((s: any) => s.id),
+        networkIds: serverGroups.map((g: any) => g.id),
+    };
+}
+
 /** Returns all servers with their latest stats, map, and MOTD in one query. */
 export async function getAllServerElements(hoursBack: number = 36): Promise<ServerElement[]> {
     const rows: any[] = await sequelize.query(`
