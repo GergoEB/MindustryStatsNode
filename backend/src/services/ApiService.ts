@@ -501,12 +501,13 @@ export class ApiService {
     });
 
     // Server share by gamemode endpoint
-    this.app.get('/api/gamemodes/:modeName/servers', async ({params, query, set}) => {
+    this.app.get('/api/gamemodes/:modeId/servers', async ({params, query, set}) => {
       try {
-        const { modeName } = params;
+        const { modeId } = params;
+        const modeIdInt = Number(modeId);
         const { range, startDate, endDate } = query;
 
-        if (modeNameToIntOrNull(modeName) === null) {
+        if (isNaN(modeIdInt)) {
           set.status = 400;
           return { error: 'GO away bot!' };
         }
@@ -531,7 +532,7 @@ export class ApiService {
 
         const bucketMinutes = Math.round((hoursBack * 60) / this.config.GRAPH_MAX_POINTS);
         let serverShare = await getServerShareByGamemode(
-          modeName,
+          modeIdInt,
           hoursBack,
           bucketMinutes,
           startDate ? parseInt(startDate as string, 10) : undefined,
@@ -546,7 +547,7 @@ export class ApiService {
           }
         })
 
-        logger.debug(`Served server share for gamemode ${modeName} with range ${range || '1d'}`);
+        logger.debug(`Served server share for gamemode ${modeIdInt} with range ${range || '1d'}`);
         return ApiPacker.pack(serverShare);
 
       } catch (error) {
@@ -560,7 +561,7 @@ export class ApiService {
         withCache({
           ttlMs: 600_000, // 10 minutes TTL
           getKey: ({ path, params }) => {
-            return `${path}:${params.modeName}:${params.range || ''}:${params.startDate || ''}:${params.endDate || ''}`;
+            return `${path}:${params.modeId || ''}:${params.range || ''}:${params.startDate || ''}:${params.endDate || ''}`;
           }
         })
       ]

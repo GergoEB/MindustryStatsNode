@@ -7,18 +7,19 @@ import { ChartControls } from "../ChartControls.tsx";
 import { GamemodeChart } from "./GamemodeChart.tsx";
 import { ServerShareChart } from "./ServerShareChart.tsx";
 import { ChartSidebarLegend } from "./ChartSidebarLegend.tsx";
+import { GamemodeInfo } from "../../../../common/models/GlobalStatsTypes.ts";
 
 const GlobalStatsChart: React.FC = () => {
   const [selectedRange, setSelectedRange] = useState<DateRangeOption>("1d");
   const [viewMode, setViewMode] = useState<ViewMode>("lines");
-  const [selectedGamemode, setSelectedGamemode] = useState<string | null>(null);
+  const [selectedGamemode, setSelectedGamemode] = useState<GamemodeInfo | null>(null);
   const [visibleModes, setVisibleModes] = useState<Set<string>>(new Set());
   const [visibleServerGroups, setVisibleServerGroups] = useState<Set<string>>(new Set());
 
   const gamemodeList = useGamemodeList();
   const { data: gamemodeData, loading, error, peakPlayers } = useGamemodeHistory(selectedRange);
   const { data: serverShareData, loading: serverShareLoading, error: serverShareError } =
-      useServerShare(selectedGamemode, selectedRange);
+      useServerShare(selectedGamemode?.modeId, selectedRange);
 
   const computedPeaks = useMemo(() => {
     const peaks: Record<string, number> = {};
@@ -173,7 +174,7 @@ const GlobalStatsChart: React.FC = () => {
                   <h4 className="text-[10px] font-black text-tertiary uppercase tracking-widest flex items-center gap-2">
                     Group Share for {" "}
                     <span className="button-accent px-1.5 py-0.5 text-xs">
-                    {selectedGamemode}
+                    {selectedGamemode.cleanModeName}
                   </span>
                   </h4>
                 </div>
@@ -183,7 +184,6 @@ const GlobalStatsChart: React.FC = () => {
                       loading={serverShareLoading}
                       error={serverShareError}
                       selectedRange={selectedRange}
-                      gamemode={selectedGamemode}
                       visibleGroups={visibleServerGroups}
                   />
                 </div>

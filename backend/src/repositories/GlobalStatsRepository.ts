@@ -7,6 +7,7 @@ import {
     playerFilterSql,
 } from './aggregateTiers.js';
 import {getVanillaModeName, modeNameToIntOrNull} from "../../../common/Gamemode.js";
+import { removeColorsFromMindustry } from '../../../common/Mindustry.js';
 
 interface RawGamemodeHistoryRow {
     timestamp: number;
@@ -15,7 +16,8 @@ interface RawGamemodeHistoryRow {
 }
 
 interface RawGamemodeListRow {
-    game_mode: number;
+    id: number;
+    clean_name: string;
     server_count: number;
 }
 
@@ -149,7 +151,7 @@ function buildGamemodeHistoryQuery(
  * null rows.
  */
 function buildServerShareQuery(
-    modeName: string,
+    modeId: number,
     hoursBack: number,
     bucketMinutes: number,
     startDate?: number,
@@ -165,7 +167,7 @@ function buildServerShareQuery(
             : { hoursBack };
 
     const conditions = [
-        'smr.game_mode = :modeInt',
+        'smr.id = :modeInt',
         `src.${time} >= ${rangeStart}`,
         `src.${time} < ${rangeEnd}`,
         playerFilterSql(source, 'src'),
@@ -208,7 +210,7 @@ function buildServerShareQuery(
         ...timeParams,
         ...PLAYER_FILTER_REPLACEMENTS,
         bucketSeconds: source.bucketMinutes * 60,
-        modeInt: modeNameToIntOrNull(modeName),
+        modeInt: modeId,
     };
     return { query, replacements };
 }
@@ -252,26 +254,17 @@ export async function getGlobalGamemodeHistory(
 
 /**
  * Get list of all gamemodes with server counts
- *
- * Still rolled up to the vanilla enum value rather than to gamemode_registry.id:
- * the returned modeName is what /api/gamemodes/:modeName/servers feeds back
- * through modeNameToIntOrNull(), which only knows the five vanilla names.
- * Listing custom modes separately needs that round trip to key on the registry
- * ID instead, which is an API change and out of scope here.
- *
- * The old query filtered on `mode_name != ''`, which silently dropped every
- * server whose mode name was empty -- by then, all of them.  gamemode_registry
- * carries the name, so the count no longer has to guess.
  */
 export async function getGamemodeList(): Promise<GamemodeInfo[]> {
     const query = `
-        SELECT gr.game_mode,
-               COUNT(DISTINCT smh.server_id) AS server_count
-        FROM gamemode_registry gr
-                 JOIN server_maps_registry smr ON smr.gamemode_id = gr.id
-                 JOIN server_maps_history smh ON smh.map_id = smr.id
-        GROUP BY gr.game_mode
-        ORDER BY server_count DESC
+      SELECT DISTINCT ON (gr.clean_name) gr.clean_name,
+        gr.id,
+        COUNT(DISTINCT smh.server_id) AS server_count
+      FROM gamemode_registry gr
+        JOIN server_maps_registry smr ON smr.gamemode_id = gr.id
+        JOIN server_maps_history smh ON smh.map_id = smr.id
+      GROUP BY gr.clean_name, gr.id
+      ORDER BY gr.clean_name, server_count DESC;
     `;
 
     const rows = await sequelize.query(query, {
@@ -279,11 +272,10 @@ export async function getGamemodeList(): Promise<GamemodeInfo[]> {
     }) as RawGamemodeListRow[];
 
     return rows.map(r => {
-        const modeName = getVanillaModeName(r.game_mode);
-        return {
-            modeName,
+      return {
+            modeId: r.id,
+            cleanModeName: r.clean_name,
             serverCount: Number(r.server_count),
-            cleanName: modeName,
         };
     });
 }
@@ -292,7 +284,7 @@ export async function getGamemodeList(): Promise<GamemodeInfo[]> {
  * Get server share for a specific gamemode
  */
 export async function getServerShareByGamemode(
-    modeName: string,
+    modeId: number,
     hoursBack: number = 24,
     bucketMinutes: number = 1,
     startDate?: number,
@@ -303,7 +295,7 @@ export async function getServerShareByGamemode(
     }
 
     const { query, replacements } = buildServerShareQuery(
-        modeName,
+        modeId,
         hoursBack,
         bucketMinutes,
         startDate,

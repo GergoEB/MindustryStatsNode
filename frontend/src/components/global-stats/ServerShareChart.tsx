@@ -16,7 +16,6 @@ interface ServerShareChartProps {
     loading: boolean;
     error: string | null;
     selectedRange: DateRangeOption;
-    gamemode: string;
     visibleGroups: Set<string>;
 }
 

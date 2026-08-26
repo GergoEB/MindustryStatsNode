@@ -18,7 +18,7 @@ export interface ServerShareEntry {
 
 // Gamemode list item
 export interface GamemodeInfo {
-    modeName: string;
+    modeId: number;
+    cleanModeName: string;
     serverCount: number;
-    cleanName: string;
 }

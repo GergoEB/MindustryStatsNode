@@ -11,7 +11,7 @@ interface ServerShareState {
 }
 
 export function useServerShare(
-    gamemode: string | null,
+    gamemodeId: number | undefined,
     range: DateRangeOption,
 ): ServerShareState {
     const [state, setState] = useState<ServerShareState>({
@@ -21,7 +21,7 @@ export function useServerShare(
     });
 
     useEffect(() => {
-        if (!gamemode) {
+        if (!gamemodeId) {
             setState({ data: [], loading: false, error: null });
             return;
         }
@@ -30,7 +30,7 @@ export function useServerShare(
         setState((s) => ({ ...s, loading: true, error: null }));
       
         const baseUrl = getBaseUrl();
-        fetch(`${baseUrl}/api/gamemodes/${encodeURIComponent(gamemode)}/servers?range=${range}`)
+        fetch(`${baseUrl}/api/gamemodes/${gamemodeId}/servers?range=${range}`)
             .then((r) => r.ok ? r.json() : Promise.reject("Unable to load server share data."))
             .then((r) => ApiPacker.unpack<ServerShareEntry>(r))
             .then((data: ServerShareEntry[]) => {
@@ -44,7 +44,7 @@ export function useServerShare(
             });
 
         return () => { cancelled = true; };
-    }, [gamemode, range]);
+    }, [gamemodeId, range]);
 
     return state;
 }
