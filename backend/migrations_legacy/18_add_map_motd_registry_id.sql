@@ -33,24 +33,26 @@ CREATE INDEX CONCURRENTLY tmp_idx_map_history_windows
 
 -- Ran up to here
 
-
+SELECT decompress_chunk(c) FROM show_chunks('server_stats', newer_than => '2026-06-11'::timestamptz) c;
 
 -- 1. Backfill MOTD Registry IDs (Optimized for Index Range Scans)
 UPDATE server_stats ss
 SET motd_registry_id = mh.motd_id
 FROM server_motds_history mh
 WHERE
-    ss.timestamp > '2026-07-22 00:00:00+00'  -- Only update records after this timestamp
+    ss.timestamp > '2026-06-11 00:00:00+00'  -- Only update records after this timestamp
   AND ss.server_id = mh.server_id
   AND ss.timestamp >= mh.valid_from
-  AND ss.timestamp < COALESCE(mh.valid_to, '3000-01-01 00:00:00+00');
+  AND ss.timestamp < COALESCE(mh.valid_to, '2026-08-28 00:00:00+00');
 
 -- 2. Backfill Map Registry IDs (Optimized for Index Range Scans)
 UPDATE server_stats ss
 SET map_registry_id = mah.map_id
 FROM server_maps_history mah
 WHERE
-    ss.timestamp > '2026-07-22 00:00:00+00'  -- Only update records after this timestamp
+    ss.timestamp > '2026-06-11 00:00:00+00'  -- Only update records after this timestamp
     AND ss.server_id = mah.server_id
   AND ss.timestamp >= mah.valid_from
-  AND ss.timestamp < COALESCE(mah.valid_to, '3000-01-01 00:00:00+00');
+  AND ss.timestamp < COALESCE(mah.valid_to, '2026-08-28 00:00:00+00');
+
+SELECT compress_chunk(c) FROM show_chunks('server_stats', newer_than => '2026-06-11'::timestamptz) c;
