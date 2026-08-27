@@ -137,7 +137,7 @@ export class ApiService {
 
     this.app.get('/sitemap.xml', async ({ request, set }) => {
       try {
-        const baseUrl = new URL(request.url).origin;
+        const baseUrl = new URL(request.url).origin.replace("http://", "https://");
 
         const staticPaths = ['/', '/global', '/inactive'];
 
