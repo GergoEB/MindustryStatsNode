@@ -167,7 +167,7 @@ function buildServerShareQuery(
             : { hoursBack };
 
     const conditions = [
-        'smr.id = :modeInt',
+        'smr.gamemode_id = :modeInt',
         `src.${time} >= ${rangeStart}`,
         `src.${time} < ${rangeEnd}`,
         playerFilterSql(source, 'src'),
