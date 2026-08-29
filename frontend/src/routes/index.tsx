@@ -6,7 +6,9 @@ import { LoadingSpinner } from "../components/LoadingSpinner";
 export const Route = createFileRoute("/")({
   component: IndexComponent,
   pendingComponent: () => (
-      <LoadingSpinner showText={false} />
+      <DetailShell title="Home">
+        <LoadingSpinner showText={false} />
+      </DetailShell>
   ),
 });
 

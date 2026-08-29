@@ -10,7 +10,9 @@ import { LoadingSpinner } from "../components/LoadingSpinner.tsx";
 export const Route = createFileRoute("/global")({
   component: GlobalComponent,
   pendingComponent: () => (
-      <LoadingSpinner showText={false} />
+      <DetailShell title="Global Stats">
+        <LoadingSpinner showText={false} />
+      </DetailShell>
   ),
   loader: async () => {
     try {
@@ -22,7 +24,7 @@ export const Route = createFileRoute("/global")({
       }
       return { error: "Unable to fetch gamemodes" };
     } catch (err) {
-      console.error("Error fetching server details in loader:", err);
+      console.error("Error fetching gamemodes in loader:", err);
       return { error: (err as Error)?.message ?? "Unknown error" };
     }
   },

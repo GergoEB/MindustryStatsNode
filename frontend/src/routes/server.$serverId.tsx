@@ -8,7 +8,9 @@ import { LoadingSpinner } from "../components/LoadingSpinner.tsx";
 export const Route = createFileRoute("/server/$serverId")({
   component: ServerComponent,
   pendingComponent: () => (
-      <LoadingSpinner showText={false} />
+      <DetailShell title="Server Details">
+        <LoadingSpinner showText={false} />
+      </DetailShell>
   ),
   loader: async ({ params }) => {
     const { serverId } = params;
