@@ -26,6 +26,8 @@ interface SidebarContextValue {
   error: boolean;
   lastUpdated: string;
   isMobile: boolean;
+  pageTitle: string;
+  setPageTitle: (title: string) => void;
 }
 
 const SidebarContext = createContext<SidebarContextValue | null>(null);
@@ -56,6 +58,7 @@ export const SidebarProvider: React.FC<SidebarProviderProps> = ({
     new Set(),
   );
   const [isHydrated, setIsHydrated] = useState<boolean>(false);
+  const [pageTitle, setPageTitle] = useState<string>("");
 
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
@@ -174,6 +177,8 @@ export const SidebarProvider: React.FC<SidebarProviderProps> = ({
     error,
     lastUpdated,
     isMobile,
+    pageTitle,
+    setPageTitle,
   };
 
   return (

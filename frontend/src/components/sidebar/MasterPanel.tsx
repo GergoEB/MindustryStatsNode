@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate, useParams } from "@tanstack/react-router";
+import { useParams } from "@tanstack/react-router";
 import ServerGroup from "./ServerGroup";
 import FlatServerList from "./FlatServerList";
 import SearchBar from "../SearchBar.tsx";
@@ -7,39 +7,17 @@ import ToggleButton from "../ToggleButton.tsx";
 import SortDropdown from "../SortDropdown.tsx";
 import Tooltip from "../Tooltip.tsx";
 import { useServerList } from "../../hooks/useServerList.ts";
-import { COMMIT, SOURCE, VERSION } from "../../../../common/version.ts";
-import { Route as InactiveRoute } from "../../routes/inactive.tsx";
-import { Route as GlobalRoute } from "../../routes/global.tsx";
+import { COMMIT, SOURCE } from "../../../../common/version.ts";
 import { useSidebar } from "../../context/SidebarContext.tsx";
-
-function formatRelativeTime(value: string | number | Date | undefined): string {
-  if (!value) return "";
-  const then = new Date(value).getTime();
-  if (Number.isNaN(then)) return String(value);
-
-  const diffMs = Date.now() - then;
-  const mins = Math.floor(diffMs / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
-}
 
 const MasterPanel: React.FC = () => {
   const {
     isMasterPanelCollapsed: isCollapsed,
-    handleToggleCollapse: onToggleCollapse,
-    totalServers,
-    onlineServers,
-    totalPlayers,
     serverGroups: rawServerGroups,
     expandedGroups,
     toggleGroupExpanded: onToggleGroup,
     loading,
     error,
-    lastUpdated,
     isMobile,
   } = useSidebar();
 
@@ -47,8 +25,6 @@ const MasterPanel: React.FC = () => {
 
   const selectedNetworkId = Number(networkId);
   const selectedServerId = Number(serverId);
-
-  const navigate = useNavigate();
 
   const rawServers = React.useMemo(() => {
     return Object.values(rawServerGroups).flat();
@@ -69,125 +45,16 @@ const MasterPanel: React.FC = () => {
     sortOptions,
   } = useServerList(rawServers);
 
-  const relativeUpdated = formatRelativeTime(lastUpdated);
-
-  // --- COLLAPSED VIEW PATH ---
   if (isCollapsed) {
-    return (
-        <div className="relative transition-all duration-300 w-14 bg-surface-primary backdrop-blur-md border-r border-default flex flex-col h-screen min-h-screen">
-          <div className="border-b border-default h-14 flex items-center justify-center gap-2 shrink-0">
-            <div className="w-8 h-8 bg-linear-to-br from-accent to-[#ff5a1f] rounded flex items-center justify-center shrink-0">
-              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                />
-              </svg>
-            </div>
-          </div>
-
-          {!isMobile && (
-              <div className="p-2.5 flex justify-center">
-                <button
-                    onClick={onToggleCollapse}
-                    className="bg-accent-muted hover:bg-accent-hover text-accent p-2 rounded transition-colors border border-accent"
-                >
-                  <svg className="w-4 h-4 transform transition-transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-              </div>
-          )}
-        </div>
-    );
+    return null;
   }
 
-  // --- EXPANDED VIEW PATH ---
   return (
       <div
-          className={`relative transition-all duration-300 ${
-              isMobile ? "w-full" : "w-3/12"
-          } bg-surface-primary backdrop-blur-md border-r border-default flex flex-col h-screen min-h-screen min-w-sm`}
+          className={`relative ${
+              isMobile ? "w-full" : "w-3/12 min-w-sm"
+          } bg-surface-primary backdrop-blur-md border-r border-default flex flex-col h-full`}
       >
-        {/* Header */}
-        <div className="bg-linear-to-r from-surface-primary/60 to-surface-primary/40 backdrop-blur-md border-b border-default h-14 px-4 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-linear-to-br from-accent to-[#ff5a1f] rounded flex items-center justify-center shrink-0">
-              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                />
-              </svg>
-            </div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-base font-bold text-primary leading-none">
-                Mindustry <span className="text-accent">Tracker</span>
-              </h1>
-              <span className="text-xs text-secondary">{VERSION}</span>
-            </div>
-          </div>
-
-          {!isMobile && (
-              <button
-                  onClick={onToggleCollapse}
-                  className="bg-accent-muted hover:bg-accent-hover text-accent p-2 rounded transition-colors border border-accent"
-              >
-                <svg className="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-          )}
-        </div>
-
-        {/* Stats line */}
-        <div className="px-4 py-2 border-b border-subtle shrink-0 flex items-center justify-between text-sm">
-          <div className="flex items-center gap-2 text-secondary">
-            <span className="font-semibold text-status-online">{onlineServers}</span>
-            <span>/</span>
-            <span className="font-semibold text-primary">{totalServers}</span>
-            <span>online</span>
-            <span className="text-tertiary">·</span>
-            <span className="font-semibold text-accent">{totalPlayers}</span>
-            <span>players</span>
-          </div>
-
-          <Tooltip content={String(lastUpdated ?? "")} position="bottom" delay={200}>
-            <span className="text-xs text-tertiary">{relativeUpdated}</span>
-          </Tooltip>
-        </div>
-
-        {/* Utility links - clearly separate, labeled, real tap targets */}
-        <div className="px-4 py-2.5 border-b border-default shrink-0 flex items-center gap-3">
-          <button
-              onClick={() => navigate({ to: InactiveRoute.to })}
-              className="flex-1 button-secondary text-sm font-medium py-2 px-3"
-          >
-            Statistics
-          </button>
-
-          <Tooltip content="Player count history across all servers" position="top" delay={200}>
-            <button
-                onClick={() => navigate({ to: GlobalRoute.to })}
-                className="flex items-center gap-1.5 text-sm font-medium text-secondary hover:text-accent border border-default hover:border-accent rounded py-2 px-3 transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                />
-              </svg>
-              Global
-            </button>
-          </Tooltip>
-        </div>
-
         {/* Controls */}
         <div className="px-4 py-3 border-b border-subtle shrink-0">
           <div className="mb-2.5">
@@ -277,7 +144,7 @@ const MasterPanel: React.FC = () => {
           )}
         </div>
 
-        {/* Footer - unchanged except last-updated removed */}
+        {/* Footer */}
         <div className="px-3 py-2 border-t border-default shrink-0">
           <p className="text-xs text-tertiary flex items-center justify-between">
           <span>

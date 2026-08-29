@@ -1,6 +1,7 @@
 import React from "react";
 import { createRootRoute, Outlet, HeadContent, Scripts } from "@tanstack/react-router";
 import MasterPanel from "../components/sidebar/MasterPanel";
+import NavBar from "../components/navbar/NavBar.tsx";
 import { fetchServers } from "../hooks/useApi.ts";
 import { SidebarProvider, useSidebar } from "../context/SidebarContext.tsx";
 import appCss from "../index.css?url";
@@ -44,14 +45,17 @@ function RootLayout() {
   const { isMobile, showMasterPanel } = useSidebar();
 
   return (
-    <div className="h-screen bg-linear-to-br from-stone-900 via-neutral-900 to-stone-900 text-white flex overflow-hidden">
+    <div className="h-screen bg-linear-to-br from-stone-900 via-neutral-900 to-stone-900 text-white flex flex-col overflow-hidden">
       <AnimatedBackground />
-      {(!isMobile || showMasterPanel) && <MasterPanel />}
-      {(!isMobile || !showMasterPanel) && (
-        <div className="flex-1" style={{ minWidth: 0 }}>
-          <Outlet />
-        </div>
-      )}
+      <NavBar />
+      <div className="flex-1 flex min-h-0">
+        {(!isMobile || showMasterPanel) && <MasterPanel />}
+        {(!isMobile || !showMasterPanel) && (
+          <div className="flex-1" style={{ minWidth: 0 }}>
+            <Outlet />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
