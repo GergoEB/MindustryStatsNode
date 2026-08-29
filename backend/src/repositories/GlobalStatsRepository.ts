@@ -6,8 +6,6 @@ import {
     pickAggregateSource,
     playerFilterSql,
 } from './aggregateTiers.js';
-import {getVanillaModeName, modeNameToIntOrNull} from "../../../common/Gamemode.js";
-import { removeColorsFromMindustry } from '../../../common/Mindustry.js';
 
 interface RawGamemodeHistoryRow {
     timestamp: number;
@@ -149,6 +147,11 @@ function buildGamemodeHistoryQuery(
  * Same aggregate-backed shape as above; time_bucket_gapfill fills each server's
  * series, so empty buckets retain server identity instead of coming back as
  * null rows.
+ *
+ * modeId identifies a display name (a clean_name), not a single registry row --
+ * see the gamemode filter below.  Peaking per (bucket, server) after that widened
+ * filter also means a server that flipped between two variants of the same mode
+ * inside one bucket counts once, exactly as it does in the history chart.
  */
 function buildServerShareQuery(
     modeId: number,
@@ -167,7 +170,19 @@ function buildServerShareQuery(
             : { hoursBack };
 
     const conditions = [
-        'smr.gamemode_id = :modeInt',
+        // Not `= :modeInt`: the history chart merges every registry row sharing
+        // a clean_name into one series, and the dropdown hands back a single
+        // representative ID for that merged series, so the share query has to
+        // widen it back out to the whole family.  A vanilla mode is the extreme
+        // case -- (0, ''), (0, 'Survival') and (0, '[accent]Survival') are three
+        // registry rows that all display as Survival -- and filtering on one of
+        // them returned one variant's servers instead of the mode's.
+        `smr.gamemode_id IN (
+             SELECT variant.id
+             FROM gamemode_registry variant
+             JOIN gamemode_registry picked ON picked.id = :modeInt
+             WHERE variant.clean_name = picked.clean_name
+         )`,
         `src.${time} >= ${rangeStart}`,
         `src.${time} < ${rangeEnd}`,
         playerFilterSql(source, 'src'),
@@ -256,15 +271,21 @@ export async function getGlobalGamemodeHistory(
  * Get list of all gamemodes with server counts
  */
 export async function getGamemodeList(): Promise<GamemodeInfo[]> {
+    // One entry per display name, matching how the history chart groups its
+    // series.  The old shape grouped on (clean_name, id) and then picked the
+    // busiest row per name with DISTINCT ON, which both under-counted servers
+    // (only the winning variant's) and handed the client an ID that stood for a
+    // single registry row rather than the mode as a whole.  MIN(id) is a stable
+    // representative of the family; getServerShareByGamemode expands it again.
     const query = `
-      SELECT DISTINCT ON (gr.clean_name) gr.clean_name,
-        gr.id,
+      SELECT MIN(gr.id) AS id,
+        gr.clean_name,
         COUNT(DISTINCT smh.server_id) AS server_count
       FROM gamemode_registry gr
         JOIN server_maps_registry smr ON smr.gamemode_id = gr.id
         JOIN server_maps_history smh ON smh.map_id = smr.id
-      GROUP BY gr.clean_name, gr.id
-      ORDER BY gr.clean_name, server_count DESC;
+      GROUP BY gr.clean_name
+      ORDER BY gr.clean_name;
     `;
 
     const rows = await sequelize.query(query, {
@@ -273,7 +294,7 @@ export async function getGamemodeList(): Promise<GamemodeInfo[]> {
 
     return rows.map(r => {
       return {
-            modeId: r.id,
+            modeId: Number(r.id),
             cleanModeName: r.clean_name,
             serverCount: Number(r.server_count),
         };
