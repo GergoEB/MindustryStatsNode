@@ -1,19 +1,6 @@
 import { Suspense, type ReactNode } from "react";
+import {LoadingSpinner} from "./LoadingSpinner.tsx";
 
-/**
- * Standard "chart is loading" overlay — a small square spinner + label.
- * Exported on its own so it can double as the fallback for Suspense *and*
- * as an inline loading overlay inside a chart component itself (see
- * `PlayerHistoryChart.tsx` for the latter).
- */
-export const ChartLoadingFallback = () => (
-  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-surface-primary/50 z-20">
-    <div className="animate-spin rounded h-6 w-6 border-2 border-accent border-t-transparent" />
-    <span className="text-xs text-secondary font-medium tracking-wide animate-pulse">
-      Loading...
-    </span>
-  </div>
-);
 
 /**
  * Wraps a client-only chart in a Suspense boundary so it never gets pulled
@@ -40,5 +27,5 @@ export const ChartLoadingFallback = () => (
  * absolutely to fill it.
  */
 export const ChartSuspense = ({ children }: { children: ReactNode }) => (
-  <Suspense fallback={<ChartLoadingFallback />}>{children}</Suspense>
+  <Suspense fallback={<LoadingSpinner />}>{children}</Suspense>
 );
