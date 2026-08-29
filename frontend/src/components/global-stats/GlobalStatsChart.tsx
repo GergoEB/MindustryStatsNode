@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo, lazy } from "react";
 import { DateRangeOption, ViewMode } from "../../util/chartHelpers.ts";
-import { useGamemodeList } from "../../hooks/api/useGamemodeList.ts";
 import { useGamemodeHistory } from "../../hooks/api/useGamemodeHistory.ts";
 import { useServerShare } from "../../hooks/api/useServerShare.ts";
 import { ChartControls } from "../ChartControls.tsx";
@@ -14,14 +13,17 @@ import { GamemodeInfo } from "../../../../common/models/GlobalStatsTypes.ts";
 const GamemodeChart = lazy(() => import("./GamemodeChart.tsx"));
 const ServerShareChart = lazy(() => import("./ServerShareChart.tsx"));
 
-const GlobalStatsChart: React.FC = () => {
+interface GlobalStatsChartProps {
+    gamemodeList: GamemodeInfo[];
+}
+
+const GlobalStatsChart: React.FC<GlobalStatsChartProps> = ({gamemodeList}) => {
   const [selectedRange, setSelectedRange] = useState<DateRangeOption>("1d");
   const [viewMode, setViewMode] = useState<ViewMode>("lines");
   const [selectedGamemode, setSelectedGamemode] = useState<GamemodeInfo | null>(null);
   const [visibleModes, setVisibleModes] = useState<Set<string>>(new Set());
   const [visibleServerGroups, setVisibleServerGroups] = useState<Set<string>>(new Set());
 
-  const gamemodeList = useGamemodeList();
   const { data: gamemodeData, loading, error, peakPlayers } = useGamemodeHistory(selectedRange);
   const { data: serverShareData, loading: serverShareLoading, error: serverShareError } =
       useServerShare(selectedGamemode?.modeId, selectedRange);
