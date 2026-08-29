@@ -50,7 +50,10 @@ const ServerGroup: React.FC<{
         </div>
         <div className="flex items-center space-x-2">
           <button
-            onClick={() => navigate({ to: `/network/${networkId}` })}
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate({to: `/network/${networkId}`}).then(() => {});
+            }}
             className={`p-1.5 ${isSelected ? "button-accent" : "button-secondary"}`}
             title="View network graph"
           >
