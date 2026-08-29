@@ -8,7 +8,6 @@ import SortDropdown from "../SortDropdown.tsx";
 import Tooltip from "../Tooltip.tsx";
 import { useServerList } from "../../hooks/useServerList.ts";
 import { COMMIT, SOURCE, VERSION } from "../../../../common/version.ts";
-import { getConnectionStatusClasses } from "../../theme.ts";
 import { Route as InactiveRoute } from "../../routes/inactive.tsx";
 import { Route as GlobalRoute } from "../../routes/global.tsx";
 import { useSidebar } from "../../context/SidebarContext.tsx";
@@ -32,7 +31,6 @@ const MasterPanel: React.FC = () => {
   const {
     isMasterPanelCollapsed: isCollapsed,
     handleToggleCollapse: onToggleCollapse,
-    connectionStatus,
     totalServers,
     onlineServers,
     totalPlayers,
@@ -71,7 +69,6 @@ const MasterPanel: React.FC = () => {
     sortOptions,
   } = useServerList(rawServers);
 
-  const connectionStatusInfo = getConnectionStatusClasses(connectionStatus);
   const relativeUpdated = formatRelativeTime(lastUpdated);
 
   // --- COLLAPSED VIEW PATH ---
@@ -103,12 +100,6 @@ const MasterPanel: React.FC = () => {
                 </button>
               </div>
           )}
-
-          <div className="mt-auto p-2.5 flex justify-center">
-            <Tooltip content={connectionStatusInfo.tooltip} position="right" delay={100}>
-              <span className={`inline-block w-2.5 h-2.5 rounded ${connectionStatusInfo.dotColor}`}></span>
-            </Tooltip>
-          </div>
         </div>
     );
   }
@@ -137,9 +128,6 @@ const MasterPanel: React.FC = () => {
               <h1 className="text-base font-bold text-primary leading-none">
                 Mindustry <span className="text-accent">Tracker</span>
               </h1>
-              <Tooltip content={connectionStatusInfo.tooltip} position="bottom" delay={100}>
-                <span className={`inline-block w-2 h-2 rounded ${connectionStatusInfo.dotColor}`}></span>
-              </Tooltip>
               <span className="text-xs text-secondary">{VERSION}</span>
             </div>
           </div>

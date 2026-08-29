@@ -27,7 +27,9 @@ export const Route = createRootRoute({
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Mindustry Stats" },
+      { name: "description", content: "Mindustry Stats is a web application that provides real-time statistics and analytics for Mindustry servers." },
     ],
+    favicon: [{ rel: "icon", href: "/favicon.ico" }],
     links: [{ rel: "stylesheet", href: appCss }],
   }),
   // SSR-fetched on first load; the client hook (useApi) takes over polling afterward.

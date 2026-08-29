@@ -8,14 +8,13 @@ import { useRouterState } from "@tanstack/react-router";
 import {
   ServerElement
 } from "../../../common/models/serverData";
-import useApi, { FetchStatus } from "../hooks/useApi.ts";
+import useApi from "../hooks/useApi.ts";
 import { useResponsive } from "../hooks/useResponsive";
 import { isHub } from "../util/mindustry.ts";
 
 interface SidebarContextValue {
   isMasterPanelCollapsed: boolean;
   showMasterPanel: boolean;
-  connectionStatus: FetchStatus;
   totalServers: number;
   onlineServers: number;
   totalPlayers: number;
@@ -60,7 +59,7 @@ export const SidebarProvider: React.FC<SidebarProviderProps> = ({
 
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
-  const { connectionStatus, data } = useApi(initialData);
+  const { data } = useApi(initialData);
   const { isMobile } = useResponsive();
 
   // Mark as hydrated to ensure SSR/client match
@@ -164,7 +163,6 @@ export const SidebarProvider: React.FC<SidebarProviderProps> = ({
   const value: SidebarContextValue = {
     isMasterPanelCollapsed,
     showMasterPanel,
-    connectionStatus,
     totalServers,
     onlineServers,
     totalPlayers,

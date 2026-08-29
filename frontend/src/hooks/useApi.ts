@@ -5,9 +5,6 @@ import { ApiPacker, ApiResponsePacket } from '../../../common/Packer.ts';
 import { getBaseUrl } from '../util/getApi.ts';
 import { useClientConfig } from './useClientConfig.ts';
 
-// We adapted the status to fit HTTP requests instead of persistent sockets
-export type FetchStatus = 'loading' | 'success' | 'error';
-
 /**
  * Server function used by the route loader for the initial SSR fetch.
  * Runs on the Bun/Elysia server, hits the same cached endpoint that the
@@ -33,7 +30,6 @@ export const fetchServers = createServerFn({ method: 'GET' }).handler(async (): 
  */
 const useApi = (initialData: ServerElement[] | null = null) => {
     const [data, setData] = useState<ServerElement[] | null>(initialData);
-    const [connectionStatus, setStatus] = useState<FetchStatus>(initialData ? 'success' : 'loading');
     const [error, setError] = useState<Error | null>(null);
     const { config: clientConfig, loading: isConfigLoading, error: configError } = useClientConfig();
   
@@ -43,16 +39,13 @@ const useApi = (initialData: ServerElement[] | null = null) => {
         let isMounted = true;
 
         if (isConfigLoading) {
-            setStatus('loading');
             return;
         }
         if (configError) {
-            setStatus('error');
             setError(configError);
             return;
         }
         if (!clientConfig) {
-            setStatus('error');
             setError(new Error('No config'));
             return;
         }
@@ -71,13 +64,11 @@ const useApi = (initialData: ServerElement[] | null = null) => {
 
                 if (isMounted) {
                     setData(jsonData);
-                    setStatus('success');
                     setError(null); // Clear any previous errors
                 }
             } catch (err) {
                 console.error('Error fetching server stats:', err);
                 if (isMounted) {
-                    setStatus('error');
                     setError(err instanceof Error ? err : new Error('Unknown error'));
                 }
             }
@@ -100,7 +91,7 @@ const useApi = (initialData: ServerElement[] | null = null) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // The empty array ensures this setup only runs once when mounted
 
-    return { data, connectionStatus, error };
+    return { data, error };
 };
 
 export default useApi;
