@@ -11,6 +11,7 @@ import {
     ViewMode,
 } from "../../util/chartHelpers.ts";
 import { createChartTooltip } from "../../util/chartTooltip.ts";
+import { ChartLoadingFallback } from "../ChartSuspense.tsx";
 
 interface GamemodeChartProps {
     data: GamemodeHistoryEntry[];
@@ -21,7 +22,9 @@ interface GamemodeChartProps {
     visibleModes: Set<string>;
 }
 
-export const GamemodeChart: React.FC<GamemodeChartProps> = ({
+// uPlot rendering half of GlobalStatsChart's gamemode graph - kept in its own
+// module so it's only fetched lazily on the client (see ChartSuspense.tsx).
+const GamemodeChart: React.FC<GamemodeChartProps> = ({
                                                                 data,
                                                                 loading,
                                                                 error,
@@ -164,14 +167,7 @@ export const GamemodeChart: React.FC<GamemodeChartProps> = ({
                 <div ref={mountRef} className="absolute inset-0 block overflow-hidden" />
             </div>
 
-            {loading && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-surface-primary/50 z-20">
-                  <div className="animate-spin rounded h-7 w-7 border-2 border-accent border-t-transparent" />
-                    <span className="text-xs text-secondary font-medium tracking-wide animate-pulse">
-                    Loading...
-                  </span>
-                </div>
-            )}
+            {loading && <ChartLoadingFallback />}
 
             {error && (
               <div className="absolute inset-0 flex items-center justify-center text-status-offline text-xs font-semibold z-20">
@@ -181,3 +177,5 @@ export const GamemodeChart: React.FC<GamemodeChartProps> = ({
         </div>
     );
 };
+
+export default GamemodeChart;

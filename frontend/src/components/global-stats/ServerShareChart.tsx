@@ -10,6 +10,7 @@ import {
     DateRangeOption,
 } from "../../util/chartHelpers.ts";
 import { createChartTooltip } from "../../util/chartTooltip.ts";
+import { ChartLoadingFallback } from "../ChartSuspense.tsx";
 
 interface ServerShareChartProps {
     data: ServerShareEntry[];
@@ -19,7 +20,9 @@ interface ServerShareChartProps {
     visibleGroups: Set<string>;
 }
 
-export const ServerShareChart: React.FC<ServerShareChartProps> = ({
+// uPlot rendering half of GlobalStatsChart's server-share graph - kept in its
+// own module so it's only fetched lazily on the client (see ChartSuspense.tsx).
+const ServerShareChart: React.FC<ServerShareChartProps> = ({
                                                                       data,
                                                                       loading,
                                                                       error,
@@ -152,14 +155,7 @@ export const ServerShareChart: React.FC<ServerShareChartProps> = ({
                 <div ref={mountRef} className="absolute inset-0 block overflow-hidden" />
             </div>
 
-            {loading && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-surface-primary/50 z-20">
-                  <div className="animate-spin rounded h-6 w-6 border-2 border-accent border-t-transparent" />
-                  <span className="text-xs text-secondary font-medium tracking-wide animate-pulse">
-                    Loading...
-                  </span>
-                </div>
-            )}
+            {loading && <ChartLoadingFallback />}
 
             {error && (
                 <div className="absolute inset-0 flex items-center justify-center text-status-offline text-xs font-semibold z-20">
@@ -169,3 +165,5 @@ export const ServerShareChart: React.FC<ServerShareChartProps> = ({
         </div>
     );
 };
+
+export default ServerShareChart;

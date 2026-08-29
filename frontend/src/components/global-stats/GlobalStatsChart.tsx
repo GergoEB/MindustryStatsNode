@@ -1,13 +1,18 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, lazy } from "react";
 import { DateRangeOption, ViewMode } from "../../util/chartHelpers.ts";
 import { useGamemodeList } from "../../hooks/api/useGamemodeList.ts";
 import { useGamemodeHistory } from "../../hooks/api/useGamemodeHistory.ts";
 import { useServerShare } from "../../hooks/api/useServerShare.ts";
 import { ChartControls } from "../ChartControls.tsx";
-import { GamemodeChart } from "./GamemodeChart.tsx";
-import { ServerShareChart } from "./ServerShareChart.tsx";
 import { ChartSidebarLegend } from "./ChartSidebarLegend.tsx";
+import { ChartSuspense } from "../ChartSuspense.tsx";
 import { GamemodeInfo } from "../../../../common/models/GlobalStatsTypes.ts";
+
+// uPlot touches the DOM at render time and isn't SSR-safe without extra
+// native deps, so these charts live in their own modules, loaded lazily
+// and only on the client (see ChartSuspense.tsx for the pattern).
+const GamemodeChart = lazy(() => import("./GamemodeChart.tsx"));
+const ServerShareChart = lazy(() => import("./ServerShareChart.tsx"));
 
 const GlobalStatsChart: React.FC = () => {
   const [selectedRange, setSelectedRange] = useState<DateRangeOption>("1d");
@@ -137,14 +142,16 @@ const GlobalStatsChart: React.FC = () => {
               </h4>
             </div>
             <div className="relative flex-1 w-full min-h-0">
-              <GamemodeChart
-                  data={gamemodeData}
-                  loading={loading}
-                  error={error}
-                  selectedRange={selectedRange}
-                  viewMode={viewMode}
-                  visibleModes={visibleModes}
-              />
+              <ChartSuspense>
+                <GamemodeChart
+                    data={gamemodeData}
+                    loading={loading}
+                    error={error}
+                    selectedRange={selectedRange}
+                    viewMode={viewMode}
+                    visibleModes={visibleModes}
+                />
+              </ChartSuspense>
             </div>
           </div>
 
@@ -179,13 +186,15 @@ const GlobalStatsChart: React.FC = () => {
                   </h4>
                 </div>
                 <div className="relative flex-1 w-full min-h-0">
-                  <ServerShareChart
-                      data={serverShareData}
-                      loading={serverShareLoading}
-                      error={serverShareError}
-                      selectedRange={selectedRange}
-                      visibleGroups={visibleServerGroups}
-                  />
+                  <ChartSuspense>
+                    <ServerShareChart
+                        data={serverShareData}
+                        loading={serverShareLoading}
+                        error={serverShareError}
+                        selectedRange={selectedRange}
+                        visibleGroups={visibleServerGroups}
+                    />
+                  </ChartSuspense>
                 </div>
               </div>
 
