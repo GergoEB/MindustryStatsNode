@@ -37,6 +37,18 @@ const logger = createLogger('ServerRepository');
 const normalize = (val: unknown): string =>
     val == null || val === '' ? '' : String(val);
 
+/**
+ * Key for a registry row's natural key.
+ *
+ * NUL is used as the separator because it cannot occur in a Mindustry server
+ * name, description or map name.  A printable separator ('|' in particular, a
+ * staple of server names) would let two different column tuples collapse onto
+ * one key, and every entry sharing a key is handed the same registry ID --
+ * i.e. one server silently inherits another's MOTD.
+ */
+const registryKey = (row: Record<string, unknown>, columns: string[]): string =>
+    columns.map(col => normalize(row[col])).join('\x00');
+
 // ─── Servers ─────────────────────────────────────────────────────────────────
 
 export async function getServers(): Promise<ServerRecord[]> {
@@ -385,8 +397,6 @@ async function upsertServerCurrent(statsBatch: ServerStats[]): Promise<void> {
  */
 async function bulkSaveHistoryEntries<T extends Record<string, unknown>>(opts: {
     entries:          T[];
-    /** Unique natural key for deduplication and registry lookup. */
-    keyOf:            (entry: T) => string;
     /** Columns forming the registry's natural key (also the ON CONFLICT target). */
     registryColumns:  string[];
     /**
@@ -413,21 +423,27 @@ async function bulkSaveHistoryEntries<T extends Record<string, unknown>>(opts: {
 }): Promise<Map<number, number>> {
     if (!opts.entries.length) return new Map();
 
+    // The natural key is derived from the registry row rather than from the
+    // entry, so the key an entry is deduplicated under and the key its row is
+    // read back under cannot drift apart.
+    const rowByEntry = new Map<T, Record<string, unknown>>();
+    const keyOf = (entry: T): string => {
+        let row = rowByEntry.get(entry);
+        if (row === undefined) {
+            row = opts.toRegistryRow(entry);
+            rowByEntry.set(entry, row);
+        }
+        return registryKey(row, opts.registryColumns);
+    };
+
     // 1. Deduplicate
     const unique = new Map<string, T>();
     for (const e of opts.entries) {
-        const k = opts.keyOf(e);
+        const k = keyOf(e);
         if (!unique.has(k)) unique.set(k, e);
     }
 
-    const registryRowToKey = new Map<string, string>();
-    for (const [key, entry] of unique.entries()) {
-        const row = opts.toRegistryRow(entry);
-        const rowKey = opts.registryColumns.map(col => row[col]).join('\x00');
-        registryRowToKey.set(rowKey, key);
-    }
-
-    const registryData = Array.from(unique.values()).map(opts.toRegistryRow);
+    const registryData = Array.from(unique.values()).map(e => rowByEntry.get(e)!);
     const insertColumns = [...opts.registryColumns, ...(opts.payloadColumns ?? [])];
 
     // 2. Upsert registry
@@ -456,11 +472,7 @@ async function bulkSaveHistoryEntries<T extends Record<string, unknown>>(opts: {
 
     const registryMap = new Map<string, number>();
     for (const row of fetched) {
-        const rowKey = opts.registryColumns.map(col => row[col]).join('\x00');
-        const naturalKey = registryRowToKey.get(rowKey);
-        if (naturalKey !== undefined) {
-            registryMap.set(naturalKey, row.id);
-        }
+        registryMap.set(registryKey(row, opts.registryColumns), row.id);
     }
 
     const serverIds = opts.entries.map((e: any) => e.server_id);
@@ -480,7 +492,7 @@ async function bulkSaveHistoryEntries<T extends Record<string, unknown>>(opts: {
     );
 
     const changedEntries = opts.entries.filter(e => {
-        const key = opts.keyOf(e);
+        const key = keyOf(e);
         const incomingRegistryId = registryMap.get(key);
         if (incomingRegistryId === null || incomingRegistryId === undefined) {
             logger.error(
@@ -511,7 +523,7 @@ async function bulkSaveHistoryEntries<T extends Record<string, unknown>>(opts: {
         );
 
         const toInsert = changedEntries.flatMap((e: any) => {
-            const key        = opts.keyOf(e);
+            const key        = keyOf(e);
             const registryId = registryMap.get(key);
             if (!registryId) logger.error(`${opts.logTag}: registry ID not found for key: ${key}`);
             return {
@@ -526,7 +538,7 @@ async function bulkSaveHistoryEntries<T extends Record<string, unknown>>(opts: {
 
     return new Map<number, number>(
         opts.entries.flatMap((e: any) => {
-            const key = opts.keyOf(e);
+            const key = keyOf(e);
             const registryId = registryMap.get(key);
             return registryId !== undefined ? [[e.server_id, registryId]] : [];
         })
@@ -536,7 +548,6 @@ async function bulkSaveHistoryEntries<T extends Record<string, unknown>>(opts: {
 export async function bulkSaveMotds(newMotds: any[]): Promise<Map<number, number>> {
     return await bulkSaveHistoryEntries({
         entries:         newMotds,
-        keyOf:           e => `${normalize((e as any).server_name)}|${normalize((e as any).description)}`,
         registryColumns: ['server_name', 'description'],
         registryTable:   'server_motds_registry',
         historyTable:    'server_motds_history',
@@ -647,7 +658,6 @@ export async function bulkSaveMaps(newMaps: any[]): Promise<Map<number, number>>
 
     return await bulkSaveHistoryEntries({
         entries:         resolved,
-        keyOf:           e => `${normalize((e as any).map_name)}|${normalize((e as any).game_mode)}|${normalize((e as any).mode_name)}`,
         registryColumns: ['map_name', 'game_mode', 'mode_name'],
         // Functionally determined by (game_mode, mode_name), so it never
         // disagrees with the natural key it is stored alongside.
