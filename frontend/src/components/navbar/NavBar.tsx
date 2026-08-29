@@ -1,6 +1,5 @@
 import React from "react";
-import { useNavigate, useRouterState } from "@tanstack/react-router";
-import Tooltip from "../Tooltip.tsx";
+import {Link, useRouterState} from "@tanstack/react-router";
 import ServerStatsSummary from "./ServerStatsSummary.tsx";
 import { useSidebar } from "../../context/SidebarContext.tsx";
 import { VERSION } from "../../../../common/version.ts";
@@ -45,6 +44,25 @@ const BackButton: React.FC<{ onClick: () => void }> = ({ onClick }) => (
   </button>
 );
 
+const NavLink: React.FC<{
+    to: string;
+    active: boolean;
+    children: React.ReactNode;
+    icon?: React.ReactNode;
+}> = ({ to, active, children, icon }) => (
+    <Link
+        to={to}
+        className={`flex items-center gap-1.5 text-sm font-medium py-2 px-1 border-b-2 transition-colors ${
+            active
+                ? "text-accent border-accent"
+                : "text-secondary border-transparent hover:text-accent hover:border-accent/50"
+        }`}
+    >
+        {icon}
+        {children}
+    </Link>
+);
+
 /**
  * App-wide top navigation bar. Hosts the brand, the server-list/global stats
  * summary, navigation to the stats pages, and the sidebar collapse toggle.
@@ -63,7 +81,6 @@ const NavBar: React.FC = () => {
     pageTitle,
   } = useSidebar();
 
-  const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   const isMobileDetailView = isMobile && !showMasterPanel;
@@ -78,38 +95,30 @@ const NavBar: React.FC = () => {
   }
 
   const navLinks = (
-    <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-      <button
-        onClick={() => navigate({ to: InactiveRoute.to })}
-        className={`text-sm font-medium py-2 px-2.5 sm:px-3 rounded transition-colors ${
-          pathname === InactiveRoute.to
-            ? "text-accent bg-accent-muted border border-accent"
-            : "text-secondary hover:text-accent border border-default hover:border-accent"
-        }`}
-      >
-        Statistics
-      </button>
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <NavLink
+              to={InactiveRoute.to}
+              active={pathname === InactiveRoute.to}
+          >
+              Inactive Servers
+          </NavLink>
 
-      <Tooltip content="Player count history across all servers" position="bottom" delay={200}>
-        <button
-          onClick={() => navigate({ to: GlobalRoute.to })}
-          className={`flex items-center gap-1.5 text-sm font-medium py-2 px-2.5 sm:px-3 rounded transition-colors border ${
-            pathname === GlobalRoute.to
-              ? "text-accent bg-accent-muted border-accent"
-              : "text-secondary hover:text-accent border-default hover:border-accent"
-          }`}
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-            />
-          </svg>
-          Global
-        </button>
-      </Tooltip>
+          <NavLink
+              to={GlobalRoute.to}
+              active={pathname === GlobalRoute.to}
+              icon={
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                      />
+                  </svg>
+              }
+          >
+              Global
+          </NavLink>
 
       {!isMobile && (
         <CollapseToggle collapsed={isMasterPanelCollapsed} onClick={handleToggleCollapse} />
