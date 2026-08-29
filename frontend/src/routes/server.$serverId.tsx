@@ -3,9 +3,15 @@ import { EmptyState } from "../components/detail/EmptyState.tsx";
 import ServerDetail from "../components/detail/ServerDetail.tsx";
 import { getBaseUrl } from "../util/getApi.ts";
 import { DetailShell } from "../components/sidebar/DetailShell.tsx";
+import { LoadingSpinner } from "../components/LoadingSpinner.tsx";
 
 export const Route = createFileRoute("/server/$serverId")({
   component: ServerComponent,
+  pendingComponent: () => (
+    <div className="flex h-full items-center justify-center">
+      <LoadingSpinner showText={false} />
+    </div>
+  ),
   loader: async ({ params }) => {
     const { serverId } = params;
 

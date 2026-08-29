@@ -10,7 +10,7 @@ import {
     DateRangeOption,
 } from "../../util/chartHelpers.ts";
 import { createChartTooltip } from "../../util/chartTooltip.ts";
-import { ChartLoadingFallback } from "../ChartSuspense.tsx";
+import { LoadingSpinner } from "../LoadingSpinner.tsx";
 
 interface ServerShareChartProps {
     data: ServerShareEntry[];
@@ -155,7 +155,7 @@ const ServerShareChart: React.FC<ServerShareChartProps> = ({
                 <div ref={mountRef} className="absolute inset-0 block overflow-hidden" />
             </div>
 
-            {loading && <ChartLoadingFallback />}
+            {loading && <LoadingSpinner />}
 
             {error && (
                 <div className="absolute inset-0 flex items-center justify-center text-status-offline text-xs font-semibold z-20">

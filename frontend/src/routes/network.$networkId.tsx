@@ -4,9 +4,15 @@ import { EmptyState } from "../components/detail/EmptyState.tsx";
 import NetworkDetail from "../components/detail/NetworkDetail.tsx";
 import { getBaseUrl } from "../util/getApi.ts";
 import { NetworkDetails } from "../../../common/models/serverData";
+import { LoadingSpinner } from "../components/LoadingSpinner.tsx";
 
 export const Route = createFileRoute("/network/$networkId")({
   component: NetworkComponent,
+  pendingComponent: () => (
+    <div className="flex h-full items-center justify-center">
+      <LoadingSpinner showText={false} />
+    </div>
+  ),
   loader: async ({ params }) => {
     const { networkId } = params;
     try {

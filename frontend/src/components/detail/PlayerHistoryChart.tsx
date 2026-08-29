@@ -4,7 +4,7 @@ import "uplot/dist/uPlot.min.css";
 import { ServerHistory } from "../../../../common/models/serverData.ts";
 import { DateRangeOption } from "../../util/dateRangeConsts.ts";
 import { createChartTooltip } from "../../util/chartTooltip.ts";
-import { ChartLoadingFallback } from "../ChartSuspense.tsx";
+import { LoadingSpinner } from "../LoadingSpinner.tsx";
 
 interface PlayerHistoryChartProps {
   data: ServerHistory[];
@@ -145,7 +145,7 @@ const PlayerHistoryChart = ({ data, loading, selectedRange }: PlayerHistoryChart
         <div ref={mountRef} className="absolute inset-0 block overflow-hidden" />
       </div>
 
-      {loading && <ChartLoadingFallback />}
+      {loading && <LoadingSpinner />}
 
       {!loading && data.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center text-tertiary text-xs font-medium z-20">

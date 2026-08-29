@@ -1,9 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { DetailShell } from "../components/sidebar/DetailShell";
 import { EmptyState } from "../components/detail/EmptyState";
+import { LoadingSpinner } from "../components/LoadingSpinner";
 
 export const Route = createFileRoute("/")({
   component: IndexComponent,
+  pendingComponent: () => (
+    <div className="flex h-full items-center justify-center">
+      <LoadingSpinner showText={false} />
+    </div>
+  ),
 });
 
 function IndexComponent() {
