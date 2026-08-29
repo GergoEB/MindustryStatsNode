@@ -1,3 +1,3 @@
-export const BUILD_VERSION = 'v6.0';
-export const BUILD_COMMIT = '5590709';
-export const BUILD_BUILD_DATE = 'Tue 25 Aug 13:36:30 BST 2026';
+export const BUILD_VERSION = 'v7.2';
+export const BUILD_COMMIT = 'b59da60';
+export const BUILD_BUILD_DATE = 'Sat 29 Aug 12:02:15 BST 2026';
