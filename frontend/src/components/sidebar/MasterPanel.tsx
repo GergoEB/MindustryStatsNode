@@ -13,8 +13,6 @@ import { Route as InactiveRoute } from "../../routes/inactive.tsx";
 import { Route as GlobalRoute } from "../../routes/global.tsx";
 import { useSidebar } from "../../context/SidebarContext.tsx";
 
-// Turns a timestamp/date-ish string into "5m ago" style text.
-// Falls back to the raw value if it can't be parsed.
 function formatRelativeTime(value: string | number | Date | undefined): string {
   if (!value) return "";
   const then = new Date(value).getTime();
@@ -49,7 +47,6 @@ const MasterPanel: React.FC = () => {
 
   const { networkId, serverId } = useParams({ strict: false });
 
-  // Design decision: NaN is used to indicate no or invalid selection - literally means "not a number"
   const selectedNetworkId = Number(networkId);
   const selectedServerId = Number(serverId);
 
@@ -77,12 +74,12 @@ const MasterPanel: React.FC = () => {
   const connectionStatusInfo = getConnectionStatusClasses(connectionStatus);
   const relativeUpdated = formatRelativeTime(lastUpdated);
 
-  // --- COLLAPSED VIEW PATH: slim navbar, same border, tiny footprint ---
+  // --- COLLAPSED VIEW PATH ---
   if (isCollapsed) {
     return (
         <div className="relative transition-all duration-300 w-14 bg-surface-primary backdrop-blur-md border-r border-default flex flex-col h-screen min-h-screen">
-          <div className="border-b border-default h-13 flex items-center justify-center gap-2 shrink-0">
-            <div className="w-7 h-7 bg-linear-to-br from-accent to-[#ff5a1f] rounded flex items-center justify-center shrink-0">
+          <div className="border-b border-default h-14 flex items-center justify-center gap-2 shrink-0">
+            <div className="w-8 h-8 bg-linear-to-br from-accent to-[#ff5a1f] rounded flex items-center justify-center shrink-0">
               <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                     strokeLinecap="round"
@@ -95,38 +92,38 @@ const MasterPanel: React.FC = () => {
           </div>
 
           {!isMobile && (
-              <div className="p-2 flex justify-center">
+              <div className="p-2.5 flex justify-center">
                 <button
                     onClick={onToggleCollapse}
-                    className="bg-accent-muted hover:bg-accent-hover text-accent p-1.5 rounded transition-colors border border-accent"
+                    className="bg-accent-muted hover:bg-accent-hover text-accent p-2 rounded transition-colors border border-accent"
                 >
-                  <svg className="w-3.5 h-3.5 transform transition-transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 transform transition-transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
                   </svg>
                 </button>
               </div>
           )}
 
-          <div className="mt-auto p-2 flex justify-center">
+          <div className="mt-auto p-2.5 flex justify-center">
             <Tooltip content={connectionStatusInfo.tooltip} position="right" delay={100}>
-              <span className={`inline-block w-2 h-2 rounded ${connectionStatusInfo.dotColor}`}></span>
+              <span className={`inline-block w-2.5 h-2.5 rounded ${connectionStatusInfo.dotColor}`}></span>
             </Tooltip>
           </div>
         </div>
     );
   }
 
-  // --- EXPANDED VIEW PATH: compact ---
+  // --- EXPANDED VIEW PATH ---
   return (
       <div
           className={`relative transition-all duration-300 ${
               isMobile ? "w-full" : "w-3/12"
           } bg-surface-primary backdrop-blur-md border-r border-default flex flex-col h-screen min-h-screen min-w-sm`}
       >
-        {/* Header - compact */}
-        <div className="bg-linear-to-r from-surface-primary/60 to-surface-primary/40 backdrop-blur-md border-b border-default h-13 px-3 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-linear-to-br from-accent to-[#ff5a1f] rounded flex items-center justify-center shrink-0">
+        {/* Header */}
+        <div className="bg-linear-to-r from-surface-primary/60 to-surface-primary/40 backdrop-blur-md border-b border-default h-14 px-4 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 bg-linear-to-br from-accent to-[#ff5a1f] rounded flex items-center justify-center shrink-0">
               <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                     strokeLinecap="round"
@@ -136,32 +133,32 @@ const MasterPanel: React.FC = () => {
                 />
               </svg>
             </div>
-            <div className="flex items-center gap-1.5">
-              <h1 className="text-sm font-bold text-primary leading-none">
+            <div className="flex items-center gap-2">
+              <h1 className="text-base font-bold text-primary leading-none">
                 Mindustry <span className="text-accent">Tracker</span>
               </h1>
               <Tooltip content={connectionStatusInfo.tooltip} position="bottom" delay={100}>
-                <span className={`inline-block w-1.5 h-1.5 rounded ${connectionStatusInfo.dotColor}`}></span>
+                <span className={`inline-block w-2 h-2 rounded ${connectionStatusInfo.dotColor}`}></span>
               </Tooltip>
-              <span className="text-[10px] text-secondary">{VERSION}</span>
+              <span className="text-xs text-secondary">{VERSION}</span>
             </div>
           </div>
 
           {!isMobile && (
               <button
                   onClick={onToggleCollapse}
-                  className="bg-accent-muted hover:bg-accent-hover text-accent p-1.5 rounded transition-colors border border-accent"
+                  className="bg-accent-muted hover:bg-accent-hover text-accent p-2 rounded transition-colors border border-accent"
               >
-                <svg className="w-3.5 h-3.5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
           )}
         </div>
 
-        {/* Stats line - replaces the two big boxes */}
-        <div className="px-3 py-1.5 border-b border-subtle shrink-0 flex items-center justify-between text-xs">
-          <div className="flex items-center gap-1.5 text-secondary">
+        {/* Stats line */}
+        <div className="px-4 py-2 border-b border-subtle shrink-0 flex items-center justify-between text-sm">
+          <div className="flex items-center gap-2 text-secondary">
             <span className="font-semibold text-status-online">{onlineServers}</span>
             <span>/</span>
             <span className="font-semibold text-primary">{totalServers}</span>
@@ -171,41 +168,45 @@ const MasterPanel: React.FC = () => {
             <span>players</span>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Tooltip content={String(lastUpdated ?? "")} position="bottom" delay={200}>
-              <span className="text-tertiary">{relativeUpdated}</span>
-            </Tooltip>
-            <button
-                onClick={() => navigate({ to: InactiveRoute.to })}
-                className="text-secondary hover:text-accent transition-colors"
-            >
-              Stats
-            </button>
-            <Tooltip content="View global player history" position="bottom" delay={200}>
-              <button
-                  onClick={() => navigate({ to: GlobalRoute.to })}
-                  className="text-secondary hover:text-accent transition-colors flex items-center"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                  />
-                </svg>
-              </button>
-            </Tooltip>
-          </div>
+          <Tooltip content={String(lastUpdated ?? "")} position="bottom" delay={200}>
+            <span className="text-xs text-tertiary">{relativeUpdated}</span>
+          </Tooltip>
         </div>
 
-        {/* Controls - compact, one row */}
-        <div className="px-3 py-2 border-b border-subtle shrink-0">
-          <div className="mb-2">
+        {/* Utility links - clearly separate, labeled, real tap targets */}
+        <div className="px-4 py-2.5 border-b border-default shrink-0 flex items-center gap-3">
+          <button
+              onClick={() => navigate({ to: InactiveRoute.to })}
+              className="flex-1 button-secondary text-sm font-medium py-2 px-3"
+          >
+            Statistics
+          </button>
+
+          <Tooltip content="Player count history across all servers" position="top" delay={200}>
+            <button
+                onClick={() => navigate({ to: GlobalRoute.to })}
+                className="flex items-center gap-1.5 text-sm font-medium text-secondary hover:text-accent border border-default hover:border-accent rounded py-2 px-3 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                />
+              </svg>
+              Global
+            </button>
+          </Tooltip>
+        </div>
+
+        {/* Controls */}
+        <div className="px-4 py-3 border-b border-subtle shrink-0">
+          <div className="mb-2.5">
             <SearchBar onSearchValueChange={setSearchTerm} value={searchTerm} />
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <Tooltip
                 content={isGrouped ? "Switch to flat list view showing all servers" : "Group servers by their cluster names"}
                 position="top"
@@ -217,7 +218,7 @@ const MasterPanel: React.FC = () => {
                   onClick={toggleGrouping}
                   activeText="Ungroup"
                   inactiveText="Group"
-                  className="w-full text-xs py-1"
+                  className="w-full text-sm py-2"
               />
             </Tooltip>
 
@@ -234,7 +235,7 @@ const MasterPanel: React.FC = () => {
                   inactiveText="Hide Inactive"
                   activeColor="bg-orange-500/20 hover:bg-orange-500/40 text-orange-400 border-orange-500/40"
                   inactiveColor="bg-neutral-600/20 hover:bg-neutral-600/40 text-neutral-400 border-neutral-600/40"
-                  className="w-full text-xs py-1"
+                  className="w-full text-sm py-2"
               />
             </Tooltip>
 
@@ -248,22 +249,22 @@ const MasterPanel: React.FC = () => {
         </div>
 
         {/* Server List */}
-        <div className="flex-1 overflow-y-auto px-2 py-2 min-h-0">
+        <div className="flex-1 overflow-y-auto px-3 py-3 min-h-0">
           {loading && (
               <div className="text-center p-4 bg-surface-secondary backdrop-blur-md border border-default rounded mb-2">
                 <div className="inline-block animate-spin rounded h-5 w-5 border-2 border-accent border-t-transparent"></div>
-                <p className="mt-2 text-xs text-secondary">Loading server data...</p>
+                <p className="mt-2 text-sm text-secondary">Loading server data...</p>
               </div>
           )}
 
           {error && (
-              <div className="bg-red-500/20 border border-red-500 text-red-400 px-3 py-2 text-xs rounded backdrop-blur-sm mb-2">
+              <div className="bg-red-500/20 border border-red-500 text-red-400 px-3 py-2 text-sm rounded backdrop-blur-sm mb-2">
                 Failed to load server data. Please try again later.
               </div>
           )}
 
           {!loading && !error && (
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 {isGrouped ? (
                     Object.entries(processedServerGroups).map(([groupName, servers]) => {
                       const groupId = servers.length > 0 ? servers[0].groupId : 0;
