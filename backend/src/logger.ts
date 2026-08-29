@@ -40,37 +40,42 @@ const renderArg = (value: unknown): string =>
  * prefix and nothing else, whatever the underlying failure was.
  */
 function renderMessage(info: winston.Logform.TransformableInfo): string {
-    let message = typeof info.message === 'string'
-        ? info.message
-        : safeStringify(info.message);
+    try {
+        let message = typeof info.message === 'string'
+            ? info.message
+            : safeStringify(info.message);
 
-    const splat = (info as any)[SPLAT];
-    const args  = Array.isArray(splat) ? splat : [];
+        const splat = (info as any)[SPLAT];
+        const args = Array.isArray(splat) ? splat : [];
 
-    if (args.length === 0) {
-        // `logger.error(err)`: winston copies the error's own properties onto
-        // `info`, so the diagnostics have to be read back off the record.
-        const fields = formatDiagnosticFields(describeError(info));
-        return fields ? `${message} ${fields}` : message;
+        if (args.length === 0) {
+            // `logger.error(err)`: winston copies the error's own properties onto
+            // `info`, so the diagnostics have to be read back off the record.
+            const fields = formatDiagnosticFields(describeError(info));
+            return fields ? `${message} ${fields}` : message;
+        }
+
+        if (FORMAT_TOKEN.test(message)) {
+            return util.format(
+                message,
+                ...args.map(a => a instanceof Error ? formatErrorDetails(describeError(a)) : a)
+            );
+        }
+
+        // For a lone object argument winston has already appended its `.message`
+        // onto the log message, before any format runs.  Strip that copy so the
+        // full rendering below -- which repeats it with the diagnostics attached --
+        // does not print the same sentence twice.
+        const only = args.length === 1 ? args[0] : undefined;
+        if (typeof only === 'object' && only !== null && typeof (only as any).message === 'string') {
+            const appended = ` ${(only as any).message}`;
+            if (message.endsWith(appended)) message = message.slice(0, -appended.length);
+        }
+
+        return `${message} ${args.map(renderArg).join(' ')}`;
+    }  catch (err) {
+        return `${String(info.message)} [log formatting failed: ${String(err)}]`;
     }
-
-    if (FORMAT_TOKEN.test(message)) {
-        // Pre-render so an Error passed to %s keeps its diagnostics instead of
-        // collapsing to util.inspect output.
-        return util.format(message, ...args.map(renderArg));
-    }
-
-    // For a lone object argument winston has already appended its `.message`
-    // onto the log message, before any format runs.  Strip that copy so the
-    // full rendering below -- which repeats it with the diagnostics attached --
-    // does not print the same sentence twice.
-    const only = args.length === 1 ? args[0] : undefined;
-    if (typeof only === 'object' && only !== null && typeof (only as any).message === 'string') {
-        const appended = ` ${(only as any).message}`;
-        if (message.endsWith(appended)) message = message.slice(0, -appended.length);
-    }
-
-    return `${message} ${args.map(renderArg).join(' ')}`;
 }
 
 /**
