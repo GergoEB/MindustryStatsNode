@@ -29,6 +29,7 @@ import {
 } from '../../../common/models/RepositoryTypes.js';
 import {CURRENT_DATA_FRESH_THRESHOLD, MAX_REALISTIC_PLAYERCOUNT} from "../const.js";
 import { getModeName } from '../../../common/Gamemode.js';
+import { withDbContext } from '../utils/errors.js';
 
 const logger = createLogger('ServerRepository');
 
@@ -48,6 +49,15 @@ const normalize = (val: unknown): string =>
  */
 const registryKey = (row: Record<string, unknown>, columns: string[]): string =>
     columns.map(col => normalize(row[col])).join('\x00');
+
+/** Human-readable form of a registry key, for log lines. */
+const describeRegistryKey = (
+    row: Record<string, unknown> | undefined,
+    columns: string[]
+): string =>
+    row === undefined
+        ? '<unknown>'
+        : columns.map(col => `${col}=${JSON.stringify(normalize(row[col]))}`).join(', ');
 
 // ─── Servers ─────────────────────────────────────────────────────────────────
 
@@ -312,18 +322,70 @@ export async function batchUpsertServers(servers: ServerInput[]): Promise<void> 
 
 export async function bulkUpdateLastSeen(serverIds: number[]): Promise<void> {
     if (!serverIds.length) return;
-    await Server.update(
-        { last_seen: new Date() },
-        { where: { id: { [Op.in]: serverIds } } }
+    await withDbContext('bulkUpdateLastSeen', { servers: serverIds.length }, () =>
+        Server.update(
+            { last_seen: new Date() },
+            { where: { id: { [Op.in]: serverIds } } }
+        )
     );
 }
 
 // ─── Stats writes ─────────────────────────────────────────────────────────────
 
+/**
+ * Drops rows that collide on server_stats' primary key, (server_id, timestamp).
+ *
+ * The collector re-queues every server on a fixed interval without waiting for
+ * the previous sweep to drain, so a slow cycle can put two samples for one
+ * server into the same batch.  When they land in the same millisecond they are
+ * the same observation, and an unguarded bulkCreate would abort the entire
+ * INSERT over it -- losing every other server's sample in the batch too.
+ */
+function dedupeStatsByPrimaryKey(statsBatch: ServerStats[]): ServerStats[] {
+    const seen = new Set<string>();
+    const rows: ServerStats[] = [];
+
+    for (const stat of statsBatch) {
+        const key = `${stat.server_id}\x00${new Date(stat.timestamp).getTime()}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        rows.push(stat);
+    }
+
+    return rows;
+}
+
 export async function bulkSaveServerStats(statsBatch: ServerStats[]): Promise<void> {
     if (!statsBatch.length) return;
-    await ServerStats.bulkCreate(<any>statsBatch);
-    await upsertServerCurrent(statsBatch);
+
+    const rows = dedupeStatsByPrimaryKey(statsBatch);
+    if (rows.length !== statsBatch.length) {
+        logger.warn(
+            `bulkSaveServerStats: dropped ${statsBatch.length - rows.length} sample(s) ` +
+            `colliding on (server_id, timestamp) -- the collector queued a server twice`
+        );
+    }
+
+    const serverIds = new Set(rows.map(r => r.server_id));
+
+    await withDbContext('bulkSaveServerStats', {
+        rows:    rows.length,
+        servers: serverIds.size,
+    }, () => sequelize.transaction(async (t) => {
+        // server_stats and server_current have to agree: without the
+        // transaction a failure between them leaves the read paths serving a
+        // "latest" sample the hypertable has no row for.
+        //
+        // ignoreDuplicates guards the cross-batch case the in-memory dedupe
+        // cannot see (a restart replaying a sample, or a second instance):
+        // the colliding row is the same observation, so skipping it is right,
+        // and it keeps one duplicate from discarding the whole batch.
+        await ServerStats.bulkCreate(<any>rows, {
+            ignoreDuplicates: true,
+            transaction:      t,
+        });
+        await upsertServerCurrent(rows, t);
+    }));
 }
 
 /**
@@ -336,7 +398,7 @@ export async function bulkSaveServerStats(statsBatch: ServerStats[]): Promise<vo
  * is guarded on the timestamp, so an out-of-order batch cannot move a server
  * backwards in time.
  */
-async function upsertServerCurrent(statsBatch: ServerStats[]): Promise<void> {
+async function upsertServerCurrent(statsBatch: ServerStats[], transaction?: Transaction): Promise<void> {
     const rows = statsBatch
         .filter(stat => stat.server_id != null && stat.timestamp != null)
         .map(stat => ({
@@ -355,7 +417,7 @@ async function upsertServerCurrent(statsBatch: ServerStats[]): Promise<void> {
 
     if (!rows.length) return;
 
-    await sequelize.query(`
+    await withDbContext('upsertServerCurrent', { rows: rows.length }, () => sequelize.query(`
         INSERT INTO server_current (
             server_id, timestamp, players, max_players, wave,
             version, version_type, ping, online, motd_registry_id, map_registry_id
@@ -384,7 +446,8 @@ async function upsertServerCurrent(statsBatch: ServerStats[]): Promise<void> {
     `, {
         replacements: { rows: JSON.stringify(rows) },
         type: QueryTypes.INSERT,
-    });
+        transaction,
+    }));
 }
 
 // ─── Map / MOTD history writes ────────────────────────────────────────────────
@@ -423,6 +486,24 @@ async function bulkSaveHistoryEntries<T extends Record<string, unknown>>(opts: {
 }): Promise<Map<number, number>> {
     if (!opts.entries.length) return new Map();
 
+    // At most one entry per server: step 4 closes every open row for a server
+    // and inserts one replacement, so two entries for the same server would
+    // leave two rows with valid_to IS NULL.  The readers pick one of those
+    // arbitrarily, which is how a server ends up stuck on a stale map or MOTD.
+    // The newest entry wins, matching the order the collector queued them.
+    const entriesByServer = new Map<number, T>();
+    for (const entry of opts.entries) {
+        entriesByServer.set(<number>(entry as any).server_id, entry);
+    }
+    const entries = Array.from(entriesByServer.values());
+
+    if (entries.length !== opts.entries.length) {
+        logger.warn(
+            `${opts.logTag}: collapsed ${opts.entries.length - entries.length} duplicate ` +
+            `server entr(ies) in one batch; keeping the newest per server`
+        );
+    }
+
     // The natural key is derived from the registry row rather than from the
     // entry, so the key an entry is deduplicated under and the key its row is
     // read back under cannot drift apart.
@@ -438,7 +519,7 @@ async function bulkSaveHistoryEntries<T extends Record<string, unknown>>(opts: {
 
     // 1. Deduplicate
     const unique = new Map<string, T>();
-    for (const e of opts.entries) {
+    for (const e of entries) {
         const k = keyOf(e);
         if (!unique.has(k)) unique.set(k, e);
     }
@@ -447,7 +528,9 @@ async function bulkSaveHistoryEntries<T extends Record<string, unknown>>(opts: {
     const insertColumns = [...opts.registryColumns, ...(opts.payloadColumns ?? [])];
 
     // 2. Upsert registry
-    await sequelize.query(`
+    await withDbContext(`${opts.logTag}: upsert ${opts.registryTable}`, {
+        rows: registryData.length,
+    }, () => sequelize.query(`
         INSERT INTO ${opts.registryTable} (${insertColumns.join(', ')})
         SELECT ${insertColumns.join(', ')}
         FROM jsonb_to_recordset(:registryData::jsonb) AS x(${opts.registryTypeDef})
@@ -455,10 +538,12 @@ async function bulkSaveHistoryEntries<T extends Record<string, unknown>>(opts: {
     `, {
         replacements: { registryData: JSON.stringify(registryData) },
         type: QueryTypes.INSERT,
-    });
+    }));
 
     // 3. Fetch registry IDs
-    const fetched: any[] = await sequelize.query(`
+    const fetched: any[] = await withDbContext(`${opts.logTag}: read back ${opts.registryTable} ids`, {
+        rows: registryData.length,
+    }, () => sequelize.query(`
         SELECT ${opts.registryColumns.join(', ')}, id
         FROM ${opts.registryTable}
         WHERE (${opts.registryColumns.join(', ')}) IN (
@@ -468,35 +553,48 @@ async function bulkSaveHistoryEntries<T extends Record<string, unknown>>(opts: {
     `, {
         replacements: { registryData: JSON.stringify(registryData) },
         type: QueryTypes.SELECT,
-    });
+    }) as Promise<any[]>);
 
     const registryMap = new Map<string, number>();
     for (const row of fetched) {
         registryMap.set(registryKey(row, opts.registryColumns), row.id);
     }
 
-    const serverIds = opts.entries.map((e: any) => e.server_id);
+    const serverIds = entries.map((e: any) => e.server_id);
     const now       = new Date();
 
-    const currentActiveHistory: any[] = await sequelize.query(`
-        SELECT server_id, ${opts.historyFkColumn} as current_id
+    const currentActiveHistory: any[] = await withDbContext(`${opts.logTag}: read open ${opts.historyTable} rows`, {
+        servers: serverIds.length,
+    }, () => sequelize.query(`
+        SELECT DISTINCT ON (server_id)
+               server_id, ${opts.historyFkColumn} as current_id
         FROM ${opts.historyTable}
         WHERE server_id IN (:serverIds) AND valid_to IS NULL
+        ORDER BY server_id, valid_from DESC
     `, {
         replacements: { serverIds },
         type: QueryTypes.SELECT
-    });
+    }) as Promise<any[]>);
 
+    // DISTINCT ON above guarantees one row per server, so the "current" value a
+    // change is judged against is the newest open row rather than whichever one
+    // the planner happened to return last.
     const currentIdByServer = new Map<number, number>(
         currentActiveHistory.map(r => [r.server_id, r.current_id])
     );
 
-    const changedEntries = opts.entries.filter(e => {
+    const changedEntries = entries.filter(e => {
         const key = keyOf(e);
         const incomingRegistryId = registryMap.get(key);
         if (incomingRegistryId === null || incomingRegistryId === undefined) {
+            // The upsert claimed to have run but the row is not readable, so
+            // this server's map/MOTD silently stops updating -- log what was
+            // actually being looked up rather than the NUL-joined key, which
+            // renders as an unreadable run-together string.
             logger.error(
-                `${opts.logTag}: registry ID not found for key ${key}`
+                `${opts.logTag}: registry ID not found after upsert; skipping history update ` +
+                `for server ${(e as any).server_id}`,
+                { table: opts.registryTable, key: describeRegistryKey(rowByEntry.get(e), opts.registryColumns) }
             );
             return false;
         }
@@ -504,40 +602,58 @@ async function bulkSaveHistoryEntries<T extends Record<string, unknown>>(opts: {
         return incomingRegistryId !== currentRegistryId;
     });
 
-    if (changedEntries.length === 0) {
-        return new Map();
-    }
-
     const changedServerIds = changedEntries.map(
         (e: any) => e.server_id
     );
 
-    // 4. Close old open rows + insert new ones in one transaction
-    await sequelize.transaction(async (t: Transaction) => {
-        await (opts.historyModel as any).update(
-            { valid_to: now },
-            {
-                where:       { server_id: { [Op.in]: changedServerIds }, valid_to: null },
-                transaction: t,
-            }
-        );
+    // 4. Close old open rows + insert new ones in one transaction.
+    //
+    // Only the history rotation is conditional.  The registry map is still
+    // returned in full below: it is what stamps motd_registry_id /
+    // map_registry_id onto each stats row, and a server's MOTD is unchanged on
+    // almost every poll cycle -- returning an empty map here left those columns
+    // NULL on all but the handful of samples taken in the cycle the MOTD
+    // happened to change.
+    if (changedServerIds.length > 0) {
+        await withDbContext(`${opts.logTag}: rotate ${opts.historyTable}`, {
+            servers: changedServerIds.length,
+        }, () => sequelize.transaction(async (t: Transaction) => {
+            await (opts.historyModel as any).update(
+                { valid_to: now },
+                {
+                    where:       { server_id: { [Op.in]: changedServerIds }, valid_to: null },
+                    transaction: t,
+                }
+            );
 
-        const toInsert = changedEntries.flatMap((e: any) => {
-            const key        = keyOf(e);
-            const registryId = registryMap.get(key);
-            if (!registryId) logger.error(`${opts.logTag}: registry ID not found for key: ${key}`);
-            return {
-                server_id:              e.server_id,
-                [opts.historyFkColumn]: registryId,
-                valid_from:             now,
-            };
-        });
+            const toInsert = changedEntries.flatMap((e: any) => {
+                const key        = keyOf(e);
+                const registryId = registryMap.get(key);
+                if (!registryId) {
+                    // Unreachable while changedEntries is filtered above, but the
+                    // FK column is NOT NULL: emitting the row anyway would fail
+                    // the whole transaction, closing every server's open row and
+                    // inserting no replacement.
+                    logger.error(
+                        `${opts.logTag}: registry ID vanished between filter and insert ` +
+                        `for server ${e.server_id}; dropping row`,
+                        { table: opts.registryTable, key: describeRegistryKey(rowByEntry.get(e), opts.registryColumns) }
+                    );
+                    return [];
+                }
+                return {
+                    server_id:              e.server_id,
+                    [opts.historyFkColumn]: registryId,
+                    valid_from:             now,
+                };
+            });
 
-        await (opts.historyModel as any).bulkCreate(toInsert, { transaction: t });
-    });
+            await (opts.historyModel as any).bulkCreate(toInsert, { transaction: t });
+        }));
+    }
 
     return new Map<number, number>(
-        opts.entries.flatMap((e: any) => {
+        entries.flatMap((e: any) => {
             const key = keyOf(e);
             const registryId = registryMap.get(key);
             return registryId !== undefined ? [[e.server_id, registryId]] : [];
@@ -607,21 +723,25 @@ async function resolveGamemodeIds(pairs: GamemodePair[]): Promise<Map<string, nu
 
     const rows = JSON.stringify(Array.from(missing.values()));
 
-    await sequelize.query(`
+    await withDbContext('resolveGamemodeIds: upsert gamemode_registry', {
+        rows: missing.size,
+    }, () => sequelize.query(`
         INSERT INTO gamemode_registry (game_mode, mode_name, clean_name)
         SELECT game_mode, mode_name, clean_name
         FROM jsonb_to_recordset(:rows::jsonb) AS x(game_mode smallint, mode_name text, clean_name text)
         ON CONFLICT (game_mode, mode_name) DO NOTHING
-    `, { replacements: { rows }, type: QueryTypes.INSERT });
+    `, { replacements: { rows }, type: QueryTypes.INSERT }));
 
     // Read back rather than using RETURNING: DO NOTHING returns nothing for the
     // rows another instance inserted first.
-    const fetched: any[] = await sequelize.query(`
+    const fetched: any[] = await withDbContext('resolveGamemodeIds: read back gamemode_registry ids', {
+        rows: missing.size,
+    }, () => sequelize.query(`
         SELECT g.id, g.game_mode, g.mode_name
         FROM gamemode_registry g
                  JOIN jsonb_to_recordset(:rows::jsonb) AS x(game_mode smallint, mode_name text)
                       ON g.game_mode = x.game_mode AND g.mode_name = x.mode_name
-    `, { replacements: { rows }, type: QueryTypes.SELECT });
+    `, { replacements: { rows }, type: QueryTypes.SELECT }) as Promise<any[]>);
 
     for (const r of fetched) {
         gamemodeIdCache.set(gamemodeKey(Number(r.game_mode), r.mode_name), Number(r.id));
