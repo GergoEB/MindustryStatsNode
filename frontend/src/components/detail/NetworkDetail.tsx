@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import NetworkHistoryChart from "./NetworkHistoryChart.tsx";
-import CopyButton from "../CopyButton.tsx";
 import ShareButton from "../ShareButton.tsx";
 import {NetworkDetails} from "../../../../common/models/serverData.ts";
 
@@ -27,10 +26,6 @@ const NetworkDetail: React.FC<{ details: NetworkDetails }> = ({ details }) => {
               </div>
               {/* Action buttons */}
               <div className="flex flex-wrap gap-2 mt-3">
-                <CopyButton
-                  text={`${window.location.origin}${window.location.pathname}/network/${details.id}`}
-                  className="button-secondary text-xs sm:text-sm px-2 sm:px-3 py-1"
-                />
                 <ShareButton
                   networkId={details.id}
                   className="button-accent text-xs sm:text-sm px-2 sm:px-3 py-1"
