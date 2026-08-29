@@ -91,10 +91,6 @@ export class ApiService {
     this.app.listen(this.config.PORT, () => {
       logger.info(`API Service HTTP server started on port ${this.config.PORT}`);
     });
-
-    logger.info(
-      "API Service initialized (HTTP server will be started by main app)",
-    );
   }
 
   async stop(): Promise<void> {
