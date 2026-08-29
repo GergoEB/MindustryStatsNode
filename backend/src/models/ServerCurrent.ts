@@ -4,7 +4,7 @@ import Server from './Server.js';
 import ServerMotdsRegistry from './ServerMotdsRegistry.js';
 import ServerMapsRegistry from './ServerMapsRegistry.js';
 
-class ServerStats extends Model {
+class ServerCurrent extends Model {
   declare server_id: number;
   declare timestamp: Date;
   declare players: number | null;
@@ -18,13 +18,11 @@ class ServerStats extends Model {
   declare map_registry_id: number | null;
 }
 
-ServerStats.init({
-  // removed the 'id' field entirely.
-  // server_id + timestamp now act as the unique identifier.
+ServerCurrent.init({
   server_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    primaryKey: true, // Mark as PK
+    primaryKey: true,
     references: {
       model: 'servers',
       key: 'id'
@@ -32,14 +30,11 @@ ServerStats.init({
   },
   timestamp: {
     type: DataTypes.DATE,
-    allowNull: false,
-    primaryKey: true, // Mark as PK
-    defaultValue: DataTypes.NOW
+    allowNull: false
   },
   players: {
     type: DataTypes.INTEGER,
-    allowNull: true,
-    defaultValue: 0
+    allowNull: true
   },
   max_players: {
     type: DataTypes.INTEGER,
@@ -81,18 +76,16 @@ ServerStats.init({
       model: 'server_maps_registry',
       key: 'id'
     }
-  },
+  }
 }, {
   sequelize,
-  tableName: 'server_stats',
+  tableName: 'server_current',
   timestamps: false
-  // Sequelize automatically handles composite keys when
-  // multiple fields are marked as primaryKey: true
 });
 
 // Define associations
-ServerStats.belongsTo(Server, { foreignKey: 'server_id' });
-ServerStats.belongsTo(ServerMotdsRegistry, { foreignKey: 'motd_registry_id' });
-ServerStats.belongsTo(ServerMapsRegistry, { foreignKey: 'map_registry_id' });
+ServerCurrent.belongsTo(Server, { foreignKey: 'server_id' });
+ServerCurrent.belongsTo(ServerMotdsRegistry, { foreignKey: 'motd_registry_id' });
+ServerCurrent.belongsTo(ServerMapsRegistry, { foreignKey: 'map_registry_id' });
 
-export default ServerStats;
+export default ServerCurrent;

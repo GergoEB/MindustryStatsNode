@@ -1,6 +1,7 @@
 import {DataTypes, Model} from 'sequelize';
 import sequelize from '../config/database.js';
 import Server from './Server.js';
+import ServerMapsRegistry from './ServerMapsRegistry.js';
 
 class ServerMapHistory extends Model {
     declare id: number;
@@ -35,7 +36,11 @@ ServerMapHistory.init({
     },
     map_id: {
         type: DataTypes.INTEGER,
-        allowNull: false
+        allowNull: false,
+        references: {
+            model: 'server_maps_registry',
+            key: 'id'
+        }
     }
 }, {
     sequelize,
@@ -43,7 +48,8 @@ ServerMapHistory.init({
     timestamps: false
 });
 
-// Define association
+// Define associations
 ServerMapHistory.belongsTo(Server, { foreignKey: 'server_id' });
+ServerMapHistory.belongsTo(ServerMapsRegistry, { foreignKey: 'map_id' });
 
 export default ServerMapHistory;
