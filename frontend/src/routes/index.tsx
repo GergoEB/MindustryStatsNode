@@ -6,9 +6,7 @@ import { LoadingSpinner } from "../components/LoadingSpinner";
 export const Route = createFileRoute("/")({
   component: IndexComponent,
   pendingComponent: () => (
-    <div className="flex h-full items-center justify-center">
       <LoadingSpinner showText={false} />
-    </div>
   ),
 });
 

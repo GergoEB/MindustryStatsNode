@@ -9,9 +9,7 @@ import { LoadingSpinner } from "../components/LoadingSpinner.tsx";
 export const Route = createFileRoute("/network/$networkId")({
   component: NetworkComponent,
   pendingComponent: () => (
-    <div className="flex h-full items-center justify-center">
       <LoadingSpinner showText={false} />
-    </div>
   ),
   loader: async ({ params }) => {
     const { networkId } = params;

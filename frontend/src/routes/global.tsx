@@ -10,9 +10,7 @@ import { LoadingSpinner } from "../components/LoadingSpinner.tsx";
 export const Route = createFileRoute("/global")({
   component: GlobalComponent,
   pendingComponent: () => (
-    <div className="flex h-full items-center justify-center">
       <LoadingSpinner showText={false} />
-    </div>
   ),
   loader: async () => {
     try {
