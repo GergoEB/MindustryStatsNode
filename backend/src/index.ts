@@ -112,9 +112,6 @@ export class MindustryStatsApp {
       
       // Initialize API service (creates HTTP server but doesn't start listening)
       await this.apiService.start();
-      
-      // Start the shared HTTP server
-      await this.apiService.listen();
 
       // Setup graceful shutdown
       this.setupShutdownHandlers();

@@ -46,7 +46,6 @@ const StrictHistoryQuery = t.Object({
 export class ApiService {
   private config: ApiServiceConfig;
   private app!: Elysia;
-  private httpServer!: http.Server;
 
   constructor(config: ApiServiceConfig) {
     this.config = config;
@@ -89,9 +88,6 @@ export class ApiService {
       }
     });
 
-    // Create HTTP server but don't start it yet - will be started by main app
-    this.httpServer = http.createServer();
-
     logger.info(
       "API Service initialized (HTTP server will be started by main app)",
     );
@@ -111,13 +107,6 @@ export class ApiService {
         reject(error);
       }
     });
-  }
-
-  /**
-   * Get the HTTP server instance for WebSocket attachment
-   */
-  getHttpServer(): http.Server {
-    return this.httpServer;
   }
 
   async stop(): Promise<void> {
