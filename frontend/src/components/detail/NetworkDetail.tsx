@@ -2,28 +2,10 @@ import React, { useState } from "react";
 import NetworkHistoryChart from "./NetworkHistoryChart.tsx";
 import CopyButton from "../CopyButton.tsx";
 import ShareButton from "../ShareButton.tsx";
-import { useNetworkDetail } from "../../hooks/useNetworkDetail.ts";
+import {NetworkDetails} from "../../../../common/models/serverData.ts";
 
-const NetworkDetail: React.FC<{ networkId: number }> = ({ networkId }) => {
-  const { details, loading, error } = useNetworkDetail(networkId);
+const NetworkDetail: React.FC<{ details: NetworkDetails }> = ({ details }) => {
   const [showIp, setShowIp] = useState(true);
-
-  if (loading) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <div className="animate-spin rounded h-12 w-12 border-4 border-accent border-t-transparent"></div>
-      </div>
-    );
-  }
-
-  if (error || !details) {
-    return (
-      <div className="h-full flex items-center justify-center flex-col">
-        <p className="text-status-offline">Failed to load network details.</p>
-        {error && <p className="text-status-offline text-sm mt-1">{error.message}</p>}
-      </div>
-    );
-  }
 
   return (
     <div className="h-full overflow-y-auto p-3 sm:p-6 bg-surface-primary">
