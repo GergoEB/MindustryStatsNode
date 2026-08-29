@@ -3,7 +3,6 @@ import { useNavigate, useRouterState } from "@tanstack/react-router";
 import Tooltip from "../Tooltip.tsx";
 import ServerStatsSummary from "./ServerStatsSummary.tsx";
 import { useSidebar } from "../../context/SidebarContext.tsx";
-import { formatRelativeTime } from "../../util/general.ts";
 import { VERSION } from "../../../../common/version.ts";
 import { Route as InactiveRoute } from "../../routes/inactive.tsx";
 import { Route as GlobalRoute } from "../../routes/global.tsx";
@@ -59,7 +58,6 @@ const NavBar: React.FC = () => {
     totalServers,
     onlineServers,
     totalPlayers,
-    lastUpdated,
     isMobile,
     showMasterPanel,
     pageTitle,
@@ -124,8 +122,6 @@ const NavBar: React.FC = () => {
       onlineServers={onlineServers}
       totalServers={totalServers}
       totalPlayers={totalPlayers}
-      lastUpdated={lastUpdated}
-      relativeUpdated={formatRelativeTime(lastUpdated)}
     />
   );
 

@@ -24,7 +24,7 @@ interface SidebarContextValue {
   handleToggleCollapse: () => void;
   loading: boolean;
   error: boolean;
-  lastUpdated: string;
+  lastUpdated: Date;
   isMobile: boolean;
   pageTitle: string;
   setPageTitle: (title: string) => void;
@@ -49,7 +49,7 @@ export const SidebarProvider: React.FC<SidebarProviderProps> = ({
   initialData,
   children,
 }) => {
-  const [lastUpdated, setLastUpdated] = useState<string>("Loading...");
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [error, setError] = useState<boolean>(false);
   const [isMasterPanelCollapsed, setIsMasterPanelCollapsed] =
     useState<boolean>(false);
@@ -83,7 +83,7 @@ export const SidebarProvider: React.FC<SidebarProviderProps> = ({
   useEffect(() => {
     if (!data) return;
     processServerData(data);
-    setLastUpdated(new Date().toLocaleString());
+    setLastUpdated(new Date());
     setLoading(false);
   }, [data]);
 
