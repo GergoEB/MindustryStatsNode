@@ -10,7 +10,9 @@ import {
     Server,
     ServerGroup,
     ServerMapHistory,
+    ServerMapsRegistry,
     ServerMotdHistory,
+    ServerMotdsRegistry,
     ServerStats,
 } from '../models/index.js';
 import {
@@ -30,6 +32,7 @@ import {
 import {CURRENT_DATA_FRESH_THRESHOLD, MAX_REALISTIC_PLAYERCOUNT} from "../const.js";
 import { getModeName } from '../../../common/Gamemode.js';
 import { withDbContext } from '../utils/errors.js';
+import type { ServerIdAdditive } from '../shared/additives.js';
 
 const logger = createLogger('ServerRepository');
 
@@ -661,7 +664,7 @@ async function bulkSaveHistoryEntries<T extends Record<string, unknown>>(opts: {
     );
 }
 
-export async function bulkSaveMotds(newMotds: any[]): Promise<Map<number, number>> {
+export async function bulkSaveMotds(newMotds: (ServerIdAdditive & Partial<ServerMotdsRegistry>)[]): Promise<Map<number, number>> {
     return await bulkSaveHistoryEntries({
         entries:         newMotds,
         registryColumns: ['server_name', 'description'],
@@ -670,8 +673,8 @@ export async function bulkSaveMotds(newMotds: any[]): Promise<Map<number, number
         historyFkColumn: 'motd_id',
         historyModel:    ServerMotdHistory,
         toRegistryRow:   e => ({
-            server_name: (e as any).server_name ?? '',
-            description: (e as any).description ?? '',
+            server_name: e.server_name ?? '',
+            description: e.description ?? '',
         }),
         registryTypeDef: 'server_name text, description text',
         logTag:          'bulkSaveMotds',
@@ -750,7 +753,7 @@ async function resolveGamemodeIds(pairs: GamemodePair[]): Promise<Map<string, nu
     return gamemodeIdCache;
 }
 
-export async function bulkSaveMaps(newMaps: any[]): Promise<Map<number, number>> {
+export async function bulkSaveMaps(newMaps: (ServerIdAdditive & Partial<ServerMapsRegistry>)[]): Promise<Map<number, number>> {
     if (!newMaps.length) return new Map();
 
     // Nail the nullable fields down once: they are part of both the map's
@@ -787,10 +790,10 @@ export async function bulkSaveMaps(newMaps: any[]): Promise<Map<number, number>>
         historyFkColumn: 'map_id',
         historyModel:    ServerMapHistory,
         toRegistryRow:   e => ({
-            map_name:    (e as any).map_name,
-            game_mode:   (e as any).game_mode,
-            mode_name:   (e as any).mode_name,
-            gamemode_id: gamemodeIds.get(gamemodeKey((e as any).game_mode, (e as any).mode_name)),
+            map_name:    e.map_name,
+            game_mode:   e.game_mode ?? null,
+            mode_name:   e.mode_name ?? null,
+            gamemode_id: gamemodeIds.get(gamemodeKey(e.game_mode, e.mode_name)),
         }),
         registryTypeDef: 'map_name text, game_mode smallint, mode_name text, gamemode_id smallint',
         logTag:          'bulkSaveMaps',

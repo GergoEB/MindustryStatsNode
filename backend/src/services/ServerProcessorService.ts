@@ -7,6 +7,10 @@ import { type RawServerData} from './ServerCollectorService.js';
 import {CURRENT_DATA_FRESH_THRESHOLD} from "../const.js";
 import { serversList } from '../state/serversList.js';
 import { isTransientError } from '../utils/errors.js';
+import type ServerMapsRegistry from '../models/ServerMapsRegistry.js';
+import type ServerMotdsRegistry from '../models/ServerMotdsRegistry.js';
+import type ServerStats from '../models/ServerStats.js';
+import type { ServerIdAdditive } from '../shared/additives.js';
 
 const logger = createLogger('ServerProcessor');
 
@@ -73,8 +77,8 @@ export class ServerProcessorService {
     // One MOTD/map entry per server: the history tables keep a single open row
     // per server, so feeding them two entries for one server would leave two
     // rows marked current.  Stats are a time series and keep every sample.
-    const motdByServer = new Map<number, any>();
-    const mapByServer  = new Map<number, any>();
+    const motdByServer = new Map<number, ServerIdAdditive & Partial<ServerMotdsRegistry>>();
+    const mapByServer  = new Map<number, ServerIdAdditive & Partial<ServerMapsRegistry>>();
 
     // Only once not every iteration
     const freshThresholdOldest = new Date(Date.now() - CURRENT_DATA_FRESH_THRESHOLD).getTime();
@@ -115,9 +119,8 @@ export class ServerProcessorService {
         // Queue up MOTD update only if changed
         motdByServer.set(rawId, {
           server_id: rawId,
-          server_name: data.serverName,
-          description: data.description,
-          mode_name: data.modeName
+          server_name: data.serverName ?? undefined,
+          description: data.description ?? undefined,
         });
 
         // Queue up Map update only if changed.
@@ -127,7 +130,7 @@ export class ServerProcessorService {
         // vanilla gamemode.
         mapByServer.set(rawId, {
           server_id: rawId,
-          map_name: data.mapName,
+          map_name: data.mapName ?? undefined,
           game_mode: data.mode,
           mode_name: data.modeName
         });
@@ -203,8 +206,8 @@ export class ServerProcessorService {
 
     const statsWithRegistryIds = statsToInsert.map(stat => ({
       ...stat,
-      motd_registry_id: motdRegistryByServer.get(stat.server_id) ?? null,
-      map_registry_id: mapRegistryByServer.get(stat.server_id) ?? null,
+      motd_registry_id: motdRegistryByServer.get(stat.server_id!),
+      map_registry_id: mapRegistryByServer.get(stat.server_id!),
     }));
 
     try {
