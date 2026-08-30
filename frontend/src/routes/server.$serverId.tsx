@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { EmptyState } from "../components/detail/EmptyState.tsx";
 import ServerDetail from "../components/detail/ServerDetail.tsx";
-import { getBaseUrl } from "../util/getApi.ts";
+import { fetchServerDetails } from "../server/loaders.ts";
 import { DetailShell } from "../components/sidebar/DetailShell.tsx";
 import { LoadingSpinner } from "../components/LoadingSpinner.tsx";
 
@@ -13,25 +13,17 @@ export const Route = createFileRoute("/server/$serverId")({
       </DetailShell>
   ),
   loader: async ({ params }) => {
-    const { serverId } = params;
-
-    // Check if its an int before even making an API request
-    if (serverId === undefined || isNaN(parseInt(serverId))) {
+    // Check if its an int before even asking the backend. Digits-only, to match
+    // what the API's t.Numeric() would have accepted -- "7abc" is not server 7.
+    if (!/^\d+$/.test(params.serverId)) {
       return { serverDataElement: null, error: "Invalid server ID" };
     }
-    
-    let serverDataElement = null;
+    const serverId = parseInt(params.serverId, 10);
 
     try {
-      const baseUrl = getBaseUrl();
-      const response = await fetch(`${baseUrl}/api/servers/${serverId}/details`);
-      if (response.ok) {
-        serverDataElement = await response.json();
-        return { serverDataElement };
-      } else {
-        const errorText = await response.text();
-        return { error: errorText };
-      }
+      const serverDataElement = await fetchServerDetails({ data: serverId });
+      if (!serverDataElement) return { error: "Server not found" };
+      return { serverDataElement };
     } catch (err) {
       console.error("Error fetching server details in loader:", err);
       return { error: ((err as Error)?.message ?? "Unknown error") };

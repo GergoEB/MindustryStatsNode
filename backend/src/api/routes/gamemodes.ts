@@ -1,5 +1,6 @@
 import { Elysia } from 'elysia';
-import { getGamemodeList, getServerShareByGamemode } from '../../repositories/GlobalStatsRepository.js';
+import { getServerShareByGamemode } from '../../repositories/GlobalStatsRepository.js';
+import { getGamemodes } from '../data/index.js';
 import { removeColorsFromMindustry } from '../../../../common/Mindustry.js';
 import { type ServerShareEntry } from '../../../../common/models/GlobalStatsTypes.js';
 import { ApiPacker } from '../../../../common/Packer.js';
@@ -8,9 +9,10 @@ import { parseTimestamp, resolveRange } from '../lib/timeRange.js';
 import { withCache } from '../middleware/cache.js';
 
 export const gamemodeRoutes = new Elysia({ prefix: '/api/gamemodes' })
-  .get('', async () => ApiPacker.pack(await getGamemodeList()), {
+  // The list itself is cached in the data layer (SSR reads it there, unpacked);
+  // packing it is cheap and only this HTTP path needs it.
+  .get('', async () => ApiPacker.pack(await getGamemodes()), {
     query: StrictNoQuery,
-    ...withCache({ ttlMs: 600_000 }), // 10 minutes TTL
   })
 
   .get('/:modeId/servers', async ({ params, query }) => {

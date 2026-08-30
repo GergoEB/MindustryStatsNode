@@ -1,6 +1,6 @@
 import { Elysia, status } from 'elysia';
-import * as serverRepository from '../../repositories/serverRepository.js';
 import { getNetworkPlayerHistory } from '../../repositories/StatsRepository.js';
+import { getNetworkDetails } from '../data/index.js';
 import { ApiPacker } from '../../../../common/Packer.js';
 import { IdParam, StrictNoQuery, StrictRangeQuery } from '../lib/schemas.js';
 import { resolveRange } from '../lib/timeRange.js';
@@ -19,15 +19,12 @@ export const networkRoutes = new Elysia({ prefix: '/api/networks' })
     }),
   })
 
+  // Cached in the data layer rather than here, so SSR's direct call shares it.
   .get('/:id/details', async ({ params }) => {
-    const details = await serverRepository.getNetworkDetails(params.id);
+    const details = await getNetworkDetails(params.id);
     if (!details) return status(404, { error: 'Network not found' });
     return details;
   }, {
     params: IdParam,
     query: StrictNoQuery,
-    ...withCache({
-      ttlMs: 300_000, // 5 minutes TTL
-      getKey: ({ path, params }) => `${path}:${params.id}`,
-    }),
   });

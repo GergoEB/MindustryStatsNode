@@ -1,31 +1,12 @@
 import { useEffect, useState } from 'react';
-import { createServerFn } from '@tanstack/react-start';
 import { ServerElement } from '../../../common/models/serverData.ts';
-import { ApiPacker, ApiResponsePacket } from '../../../common/Packer.ts';
-import { getBaseUrl } from '../util/getApi.ts';
+import { ApiPacker } from '../../../common/Packer.ts';
 import { useClientConfig } from './useClientConfig.ts';
-
-/**
- * Server function used by the route loader for the initial SSR fetch.
- * Runs on the Bun/Elysia server, hits the same cached endpoint that the
- * client polling below uses, and returns already-unpacked data so it can
- * be serialized straight into the loader payload.
- */
-export const fetchServers = createServerFn({ method: 'GET' }).handler(async (): Promise<ApiResponsePacket> => {
-    const baseUrl = getBaseUrl();
-    const response = await fetch(`${baseUrl}/api/servers`);
-
-    if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return await response.json();
-});
 
 /**
  * Client-side hook that keeps polling `/api/servers` every 10s to stay in
  * sync with the cached backend. `initialData` (typically sourced from the
- * route loader via `fetchServers`) can be passed in to avoid a loading
+ * route loader via `server/loaders.ts`) can be passed in to avoid a loading
  * flash on first paint after SSR hydration.
  */
 const useApi = (initialData: ServerElement[] | null = null) => {

@@ -5,6 +5,8 @@ import path from 'path';
 import { createLogger } from '../logger.js';
 import { api } from './app.js';
 import { apiConfig } from './context.js';
+import * as ssrData from './data/index.js';
+import { provideSsrData } from './data/registry.js';
 import { rateLimit, type RateLimitTier } from './middleware/rateLimit.js';
 
 const logger = createLogger('WebServer');
@@ -40,6 +42,11 @@ async function loadSsrHandler(): Promise<(request: Request) => Promise<Response>
  * TanStack SSR handler as the catch-all.
  */
 export async function createWebServer() {
+  // Must happen before the SSR bundle is loaded: its route loaders resolve the
+  // data layer through globalThis and call it in-process instead of looping back
+  // over HTTP. See api/data/registry.ts.
+  provideSsrData(ssrData);
+
   const handleSsrRequest = await loadSsrHandler();
 
   return new Elysia()

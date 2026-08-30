@@ -2,8 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { DetailShell } from "../components/sidebar/DetailShell.tsx";
 import { EmptyState } from "../components/detail/EmptyState.tsx";
 import NetworkDetail from "../components/detail/NetworkDetail.tsx";
-import { getBaseUrl } from "../util/getApi.ts";
-import { NetworkDetails } from "../../../common/models/serverData";
+import { fetchNetworkDetails } from "../server/loaders.ts";
 import { LoadingSpinner } from "../components/LoadingSpinner.tsx";
 
 export const Route = createFileRoute("/network/$networkId")({
@@ -14,15 +13,14 @@ export const Route = createFileRoute("/network/$networkId")({
       </DetailShell>
   ),
   loader: async ({ params }) => {
-    const { networkId } = params;
+    // Digits-only, matching what the API's t.Numeric() would have accepted.
+    if (!/^\d+$/.test(params.networkId)) return { error: "Invalid network ID" };
+    const networkId = parseInt(params.networkId, 10);
+
     try {
-      const baseUrl = getBaseUrl();
-      const r = await fetch(`${baseUrl}/api/networks/${networkId}/details`);
-      if (r.ok) {
-        const data: NetworkDetails = await r.json();
-        return { details: data };
-      }
-      return { error: "Failed to fetch network details" };
+      const details = await fetchNetworkDetails({ data: networkId });
+      if (!details) return { error: "Network not found" };
+      return { details };
     } catch (err) {
       console.error("Error fetching network details in loader:", err);
       return { error: ((err as Error)?.message ?? "Unknown error") };

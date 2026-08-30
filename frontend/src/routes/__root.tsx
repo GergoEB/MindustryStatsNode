@@ -2,7 +2,7 @@ import React from "react";
 import { createRootRoute, Outlet, HeadContent, Scripts } from "@tanstack/react-router";
 import MasterPanel from "../components/sidebar/MasterPanel";
 import NavBar from "../components/navbar/NavBar.tsx";
-import { fetchServers } from "../hooks/useApi.ts";
+import { fetchServers } from "../server/loaders.ts";
 import { SidebarProvider, useSidebar } from "../context/SidebarContext.tsx";
 import appCss from "../index.css?url";
 import { ApiPacker } from "../../../common/Packer.ts";
@@ -33,7 +33,8 @@ export const Route = createRootRoute({
     favicon: [{ rel: "icon", href: "/favicon.ico" }],
     links: [{ rel: "stylesheet", href: appCss }],
   }),
-  // SSR-fetched on first load; the client hook (useApi) takes over polling afterward.
+  // Read straight out of the backend's live list on first load; the client hook
+  // (useApi) takes over polling afterward.
   loader: async () => {
     const data = await fetchServers();
     return { initialData: data };

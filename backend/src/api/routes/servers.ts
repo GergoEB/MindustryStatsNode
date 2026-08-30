@@ -1,37 +1,26 @@
 import { Elysia, status } from 'elysia';
-import { createLogger } from '../../logger.js';
-import * as serverRepository from '../../repositories/serverRepository.js';
 import { getMapHistory, getMotdHistory } from '../../repositories/serverRepository.js';
 import { getAggregatedHistory } from '../../repositories/StatsRepository.js';
 import { ApiPacker } from '../../../../common/Packer.js';
-import { serversList } from '../../state/serversList.js';
+import { getServerDetails, getServerListPacked } from '../data/index.js';
 import { IdParam, StrictHistoryQuery, StrictNoQuery, StrictPaginationQuery } from '../lib/schemas.js';
 import { parseTimestamp, resolveRange } from '../lib/timeRange.js';
 import { withCache } from '../middleware/cache.js';
 
-const logger = createLogger('Api');
-
 export const serverRoutes = new Elysia({ prefix: '/api' })
-  .get('/servers', () => {
-    const servers = Array.from(serversList.values());
-    logger.debug(`Served ${servers.length} servers from cache`);
-    return ApiPacker.pack(servers);
-  }, {
+  // No withCache on the next two: their caching lives in the data layer so that
+  // SSR, which calls them without going through HTTP, shares the same entries.
+  .get('/servers', () => getServerListPacked(), {
     query: StrictNoQuery,
-    ...withCache({ ttlMs: 180_000 }), // 3 minutes TTL
   })
 
   .get('/servers/:id/details', async ({ params }) => {
-    const server = await serverRepository.getServer(params.id);
+    const server = await getServerDetails(params.id);
     if (!server) return status(404, { error: 'Server not found' });
     return server;
   }, {
     params: IdParam,
     query: StrictNoQuery,
-    ...withCache({
-      ttlMs: 180_000, // 3 minutes TTL
-      getKey: ({ path, params }) => `${path}:${params.id}`,
-    }),
   })
 
   .get('/servers/:id/motd-history', async ({ params, query }) => {
