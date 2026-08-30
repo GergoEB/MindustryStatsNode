@@ -1,6 +1,7 @@
 import {DataTypes, Model} from 'sequelize';
 import sequelize from '../config/database.js';
 import Server from './Server.js';
+import ServerMotdsRegistry from './ServerMotdsRegistry.js';
 
 class ServerMotdHistory extends Model {
   declare id: number;
@@ -26,7 +27,11 @@ ServerMotdHistory.init({
   },
   motd_id: {
     type: DataTypes.INTEGER,
-    allowNull: false
+    allowNull: false,
+    references: {
+      model: 'server_motds_registry',
+      key: 'id'
+    }
   },
   // Sequelize strips undeclared columns from both bulkCreate() and update(),
   // silently and without error.  While these two were missing, the history
@@ -48,7 +53,8 @@ ServerMotdHistory.init({
   timestamps: false
 });
 
-// Define association
+// Define associations
 ServerMotdHistory.belongsTo(Server, { foreignKey: 'server_id' });
+ServerMotdHistory.belongsTo(ServerMotdsRegistry, { foreignKey: 'motd_id' });
 
 export default ServerMotdHistory;
