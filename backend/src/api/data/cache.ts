@@ -28,9 +28,17 @@ function sweep(now: number): void {
 
 /**
  * Returns the cached value for `key`, or runs `produce` and caches it for `ttlMs`.
+ *
  * A rejection is never cached: the entry is dropped so the next caller retries.
+ * An `undefined` result — "no such id" — is held for `missTtlMs` instead, which
+ * defaults to the same TTL. Callers that can miss should pass something short.
  */
-export function cached<T>(key: string, ttlMs: number, produce: () => Promise<T>): Promise<T> {
+export function cached<T>(
+  key: string,
+  ttlMs: number,
+  produce: () => Promise<T>,
+  missTtlMs: number = ttlMs,
+): Promise<T> {
   const now = Date.now();
   const hit = store.get(key);
   if (hit && now < hit.expiry) return hit.value as Promise<T>;
@@ -38,12 +46,20 @@ export function cached<T>(key: string, ttlMs: number, produce: () => Promise<T>)
   if (store.size >= SWEEP_THRESHOLD) sweep(now);
 
   const value = produce();
-  store.set(key, { value, expiry: now + ttlMs });
+  const entry: Entry = { value, expiry: now + ttlMs };
+  store.set(key, entry);
 
-  value.catch(() => {
-    // Only drop our own entry — a later call may already have replaced it.
-    if (store.get(key)?.value === value) store.delete(key);
-  });
+  value.then(
+    (resolved) => {
+      if (resolved === undefined && store.get(key) === entry) {
+        entry.expiry = Date.now() + missTtlMs;
+      }
+    },
+    () => {
+      // Only drop our own entry — a later call may already have replaced it.
+      if (store.get(key) === entry) store.delete(key);
+    },
+  );
 
   return value;
 }

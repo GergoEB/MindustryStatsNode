@@ -23,6 +23,14 @@ import { cached } from './cache.js';
 
 const logger = createLogger('ApiData');
 
+/**
+ * How long "no such id" is held. Unknown ids are what a crawler generates, so
+ * absorbing a burst of them is worth something — but the old route cache refused
+ * to store 404s at all, and holding one for a full TTL would keep a server 404ing
+ * for minutes after it appeared. Seconds gets both.
+ */
+const MISS_TTL = 15_000;
+
 const TTL = {
   servers: 180_000,
   serverDetails: 180_000,
@@ -46,16 +54,10 @@ export function getGamemodes(): Promise<GamemodeInfo[]> {
   return cached('gamemodes', TTL.gamemodes, () => getGamemodeList());
 }
 
-/**
- * A miss is cached too, unlike the old route-level cache which only stored 200s.
- * That is deliberate: unknown ids are what a crawler generates, and the list this
- * is reached from is itself three minutes stale, so a new server was never going
- * to be linked sooner than that anyway.
- */
 export function getServerDetails(serverId: number): Promise<(ServerElement & ServerDetails) | undefined> {
-  return cached(`server:${serverId}`, TTL.serverDetails, () => serverRepository.getServer(serverId));
+  return cached(`server:${serverId}`, TTL.serverDetails, () => serverRepository.getServer(serverId), MISS_TTL);
 }
 
 export function getNetworkDetails(groupId: number): Promise<NetworkDetails | undefined> {
-  return cached(`network:${groupId}`, TTL.networkDetails, () => serverRepository.getNetworkDetails(groupId));
+  return cached(`network:${groupId}`, TTL.networkDetails, () => serverRepository.getNetworkDetails(groupId), MISS_TTL);
 }
