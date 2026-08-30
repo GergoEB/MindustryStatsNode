@@ -23,14 +23,21 @@ Inside is:
 - ServerDiscoveryService.ts - Queries the database for servers, and sends a ping to them
 - ServerProcessorService.ts - Processes server data, and inserts it to database
 - mindustryService.ts - Sends Mindustry Packets and waits for response
-- ApiService.ts - Handles API requests, and sends data to frontend
+
+The HTTP layer lives in `backend/src/api` instead, and is not a service:
+- `WebServer.ts` - transport: rate limit tiers, CORS, static assets, the API, and the TanStack SSR catch-all. `startWebServer()` / `stopWebServer()`.
+- `app.ts` - the Elysia app itself (routes + error handling). Exports `api` and `type Api`; the frontend consumes that type via Eden Treaty in `frontend/src/util/api.ts`, so it must stay a chained expression rather than a class.
+- `routes/*.ts` - one chained Elysia instance per group.
+- `middleware/cache.ts`, `middleware/rateLimit.ts` - spread into a route's hook options (`...withCache({...})`). Do NOT pass them as `use: [...]`, Elysia 1.4 silently ignores beforeHandle/afterHandle supplied that way.
+
+The live server snapshot shared between the processor and the API is `backend/src/state/serversList.ts`.
 
 The server related services, pass data between eachother:
 ServerCollectorService does collections daily, but every few minutes it requeues all servers, ServerDiscoveryService pings them, and places responses into a queue for ServerProcessorService to process and insert into database in efficient batches.
 
 ## Frontend
 Tanstack Start Router is used for routing and SSR.
-To get data hooks are used, they do not include types yet via Elysia, so they are thrown about inside `common/models`.
+To get data hooks are used. A typed Eden Treaty client is available at `frontend/src/util/api.ts`; the existing hooks still hand-fetch against `common/models` types and can be migrated onto it incrementally.
 uPlot is used for graphs, Chart.js too, but moving away from it. For tooltips use `frontend/src/util/chartTooltip.ts` and a useful helper is at `frontend/src/util/chartHelpers.ts`.
 
 ## Notable Design Decisions

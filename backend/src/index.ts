@@ -7,11 +7,12 @@ import {loadBaseConfig} from './shared/config.js';
 import {ServerDiscoveryService} from './services/ServerDiscoveryService.js';
 import { type RawServerData, ServerCollectorService} from './services/ServerCollectorService.js';
 import {ServerProcessorService} from './services/ServerProcessorService.js';
-import {ApiService} from './services/ApiService.js';
+import {startWebServer, stopWebServer} from './api/WebServer.js';
+import {serversList} from './state/serversList.js';
+import {apiConfig} from './api/context.js';
 import {initCountryLookup} from './utils/countryLookup.js';
 import os from 'os';
 import {BUILD_DATE, COMMIT, VERSION} from '../../common/version.js';
-import { type ServerElement } from '../../common/models/serverData.js';
 
 const logger = createLogger('Main');
 
@@ -31,11 +32,9 @@ export class MindustryStatsApp {
   public discoveryService!: ServerDiscoveryService;
   public collectorService!: ServerCollectorService;
   public processorService!: ServerProcessorService;
-  public apiService!: ApiService;
 
   // Shared resources
   private rawDataQueue!: InMemoryQueue<RawServerData>;
-  public serversList: Map<string, ServerElement> = new Map();
 
   // Cache cleanup interval
   private cacheCleanupInterval?: NodeJS.Timeout;
@@ -79,14 +78,6 @@ export class MindustryStatsApp {
         QUEUE_POLL_TIMEOUT_MS: parseInt(process.env.QUEUE_POLL_TIMEOUT_MS || '10000')
       };
 
-      const apiConfig = {
-        ...baseConfig,
-        PORT: parseInt(process.env.PORT || '3000'),
-        CORS_ORIGIN: process.env.CORS_ORIGIN || '*',
-        GRAPH_MAX_POINTS: parseInt(process.env.GRAPH_MAX_POINTS || '168'),
-        DATA_COLLECTION_INTERVAL_MS: collectorConfig.DATA_COLLECTION_INTERVAL_MS
-      };
-
       // Initialize shared resources
       this.rawDataQueue = new InMemoryQueue('rawData');
 
@@ -100,7 +91,6 @@ export class MindustryStatsApp {
         this.rawDataQueue,
         processorConfig
       );
-      this.apiService = new ApiService(apiConfig);
 
       // Initialize processor data storage
       await this.processorService.initialize();
@@ -110,8 +100,8 @@ export class MindustryStatsApp {
       await this.collectorService.start();
       await this.processorService.start();
       
-      // Initialize API service (creates HTTP server but doesn't start listening)
-      await this.apiService.start();
+      // Serve the API + SSR frontend
+      await startWebServer();
 
       // Setup graceful shutdown
       this.setupShutdownHandlers();
@@ -119,7 +109,7 @@ export class MindustryStatsApp {
       logger.info('=== All services started successfully ===');
       logger.info(`API & WebSocket Server: http://localhost:${apiConfig.PORT}`);
       logger.info(`Collection Concurrency: ${collectorConfig.COLLECTION_CONCURRENCY}`);
-      logger.info(`Server Count: ${this.serversList.size}`);
+      logger.info(`Server Count: ${serversList.size}`);
 
     } catch (error) {
       logger.error('Failed to start application:', error);
@@ -141,7 +131,7 @@ export class MindustryStatsApp {
 
       // Stop all services
       try {
-        await this.apiService.stop();
+        await stopWebServer();
         await this.processorService.stop();
         await this.collectorService.stop();
         await this.discoveryService.stop();

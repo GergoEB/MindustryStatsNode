@@ -5,7 +5,7 @@ import * as serverRepository from '../repositories/serverRepository.js';
 import { type ServerProcessorConfig} from '../shared/config.js';
 import { type RawServerData} from './ServerCollectorService.js';
 import {CURRENT_DATA_FRESH_THRESHOLD} from "../const.js";
-import { mindustryApp } from '../index.js';
+import { serversList } from '../state/serversList.js';
 import { isTransientError } from '../utils/errors.js';
 
 const logger = createLogger('ServerProcessor');
@@ -27,15 +27,15 @@ export class ServerProcessorService {
   async initialize(): Promise<void> {
     logger.info('Initializing data storage...');
     const servers = await serverRepository.getAllServerElements(this.config.MAX_HISTORY_HOURS);
-    mindustryApp.serversList.clear();
+    serversList.clear();
 
     for (const server of servers) {
       server.online = false;
       if (server.currentData) server.currentData.online = false;
-      mindustryApp.serversList.set(CACHE_KEYS.SERVER_DATA(server.id), server);
+      serversList.set(CACHE_KEYS.SERVER_DATA(server.id), server);
     }
 
-    logger.info(`Initialized data storage with ${mindustryApp.serversList.size} servers`);
+    logger.info(`Initialized data storage with ${serversList.size} servers`);
   }
 
   async start(): Promise<void> {
@@ -89,7 +89,7 @@ export class ServerProcessorService {
     // Process memory states and prepare DB payloads
     for (const rawData of ordered) {
       const { data, timestamp, online, cacheKey, serverId: rawId } = rawData;
-      let serverEntry = mindustryApp.serversList.get(cacheKey);
+      let serverEntry = serversList.get(cacheKey);
 
       if (serverEntry == null) {
         try {
@@ -171,7 +171,7 @@ export class ServerProcessorService {
         });
       }
 
-      mindustryApp.serversList.set(cacheKey, serverEntry)
+      serversList.set(cacheKey, serverEntry)
     }
 
     if (unknownServers > 0) {
