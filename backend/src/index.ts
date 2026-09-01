@@ -46,7 +46,8 @@ export class MindustryStatsApp {
    */
   async start(): Promise<void> {
     try {
-      logger.info('=========== Starting Mindustry Stats Unified Application ===========');
+      const timesStart = Date.now();
+      logger.info('=========== Starting Mindustry Stats ===========');
       logger.info(`Version ${VERSION} | Commit ${COMMIT} | Build Date: ${BUILD_DATE}`)
 
       // Initialize database
@@ -110,6 +111,7 @@ export class MindustryStatsApp {
       logger.info(`API & WebSocket Server: http://localhost:${apiConfig.PORT}`);
       logger.info(`Collection Concurrency: ${collectorConfig.COLLECTION_CONCURRENCY}`);
       logger.info(`Server Count: ${serversList.size}`);
+      logger.info(`Startup time: ${Date.now() - timesStart}ms ⚡`) // had to, every cli devtool has the ⚡ for speed
 
     } catch (error) {
       logger.error('Failed to start application:', error);
