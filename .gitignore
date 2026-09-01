@@ -11,3 +11,6 @@
 public
 TODO.md
 common/version_build.ts
+# Go collector build output
+/collector/collector
+/collector/bin/
