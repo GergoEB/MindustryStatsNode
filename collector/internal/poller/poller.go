@@ -142,31 +142,38 @@ func (p *Poller) decode(buf []byte, host string, port, ping int, addr netip.Addr
 
 	serverName, err := ReadString(buf, &offset)
 	if err != nil {
+		p.log.Error("Failed to read server name", "host", host, "err", err)
 		return nil, err
 	}
 	mapName, err := ReadString(buf, &offset)
 	if err != nil {
+		p.log.Error("Failed to read map name", "host", host, "err", err)
 		return nil, err
 	}
 	players, err := ReadInt32BE(buf, &offset)
 	if err != nil {
+		p.log.Error("Failed to read players", "host", host, "err", err)
 		return nil, err
 	}
 	wave, err := ReadInt32BE(buf, &offset)
 	if err != nil {
+		p.log.Error("Failed to read wave", "host", host, "err", err)
 		return nil, err
 	}
 	version, err := ReadInt32BE(buf, &offset)
 	if err != nil {
+		p.log.Error("Failed to read version", "host", host, "err", err)
 		return nil, err
 	}
 	versionType, err := ReadString(buf, &offset)
 	if err != nil {
+		p.log.Error("Failed to read version type", "host", host, "err", err)
 		return nil, err
 	}
 
 	modeByte, err := ReadUint8(buf, &offset)
 	if err != nil {
+		p.log.Error("Failed to read mode byte", "host", host, "err", err)
 		return nil, err
 	}
 	// An ordinal this build does not know about is recorded as Survival, which
@@ -178,14 +185,17 @@ func (p *Poller) decode(buf []byte, host string, port, ping int, addr netip.Addr
 
 	playerLimit, err := ReadInt32BE(buf, &offset)
 	if err != nil {
+		p.log.Error("Failed to read player limit", "host", host, "err", err)
 		return nil, err
 	}
 	description, err := ReadString(buf, &offset)
 	if err != nil {
+		p.log.Error("Failed to read description", "host", host, "err", err)
 		return nil, err
 	}
 	rawModeName, err := ReadString(buf, &offset)
 	if err != nil {
+		p.log.Error("Failed to read mode name", "host", host, "err", err)
 		return nil, err
 	}
 
