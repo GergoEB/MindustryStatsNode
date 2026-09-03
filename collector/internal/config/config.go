@@ -182,7 +182,7 @@ func defaultConcurrency() int {
 // The collector runs from the repo root or from collector/, and the migrations
 // live in backend/migrations either way.
 func defaultMigrationsDir() string {
-	for _, candidate := range []string{"backend/migrations", "../backend/migrations", "migrations"} {
+	for _, candidate := range []string{"../../migrations", "migrations"} {
 		if info, err := os.Stat(candidate); err == nil && info.IsDir() {
 			abs, err := filepath.Abs(candidate)
 			if err == nil {
