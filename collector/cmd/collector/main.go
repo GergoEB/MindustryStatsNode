@@ -41,6 +41,11 @@ func run() error {
 	log := logging.New("Main")
 
 	log.Info("=========== Starting Mindustry Stats Collector ===========")
+	cwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	log.Info("Working Directory", "dir", cwd)
 	if cfg.DryRun {
 		log.Warn("DRY_RUN is set: every loop runs, but no write reaches the database")
 	}
