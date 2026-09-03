@@ -191,7 +191,7 @@ func defaultMigrationsDir() string {
 			return candidate
 		}
 	}
-	return "backend/migrations"
+	return "migrations"
 }
 
 // dotenv.config() equivalent.  Existing environment variables always win, which
