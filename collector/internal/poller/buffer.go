@@ -7,10 +7,6 @@ import (
 	"github.com/OnlyGergo/MindustryStatsNode/collector/internal/mindustry"
 )
 
-// Port of backend/src/utils/buffer.ts.  The offset is threaded through by
-// pointer exactly as the TS `{ value: number }` box was, so the read sequence in
-// poller.go lines up field for field with mindustryService.ts.
-
 // ErrShortPacket means the packet ended in the middle of a field.  The TS code
 // let Buffer's own range error escape into the try/catch around the whole
 // decode; here every read reports it explicitly.
@@ -19,6 +15,10 @@ var ErrShortPacket = fmt.Errorf("packet truncated")
 // ReadString reads a byte-length-prefixed UTF-8 string.
 func ReadString(buf []byte, offset *int) (string, error) {
 	length, err := ReadUint8(buf, offset)
+	if *offset >= len(buf) {
+		// Java uses `buffer[offset.value] & 0xff`, so here we mask to 0-255
+		return "", nil
+	}
 	if err != nil {
 		return "", err
 	}
