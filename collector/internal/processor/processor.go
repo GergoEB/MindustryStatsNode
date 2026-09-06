@@ -235,9 +235,13 @@ func (p *Processor) ProcessBatch(ctx context.Context, raws []collector.RawServer
 	for i := range statsToInsert {
 		if id, ok := motdRegistry[statsToInsert[i].ServerID]; ok {
 			statsToInsert[i].MotdRegistryID = intPtr(id)
+		} else if statsToInsert[i].Online {
+			p.log.Error("MOTD registry lookup failed for online server", slog.Int("server_id", statsToInsert[i].ServerID))
 		}
 		if id, ok := mapRegistry[statsToInsert[i].ServerID]; ok {
 			statsToInsert[i].MapRegistryID = intPtr(id)
+		} else if statsToInsert[i].Online {
+			p.log.Error("Map registry lookup failed for online server", slog.Int("server_id", statsToInsert[i].ServerID))
 		}
 	}
 
